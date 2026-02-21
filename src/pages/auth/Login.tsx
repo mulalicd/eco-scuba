@@ -40,7 +40,9 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      },
     });
     if (error) {
       toast({ title: "Greška", description: error.message, variant: "destructive" });
@@ -89,6 +91,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="vas@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -105,6 +108,7 @@ export default function Login() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

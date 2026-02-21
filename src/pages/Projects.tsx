@@ -69,6 +69,56 @@ export default function Projects() {
     }
   };
 
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Da li ste sigurni da želite obrisati projekat "${title}"? Ova akcija je nepovratna.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success("Projekat je uspješno obrisan");
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      toast.error("Greška pri brisanju: " + err.message);
+    }
+  };
+
+  const handleDuplicate = async (project: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Korisnik nije prijavljen");
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          title: `${project.title} (Kopija)`,
+          donor_name: project.donor_name,
+          owner_id: user.id,
+          project_language: project.project_language,
+          status: 'draft',
+          apa_collected_data: project.apa_collected_data,
+          project_locations: project.project_locations,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Projekat je dupliciran");
+      fetchProjects();
+    } catch (err: any) {
+      console.error("Duplicate error:", err);
+      toast.error("Greška pri dupliciranju: " + err.message);
+    }
+  };
+
   const filteredProjects = projects.filter(p => {
     const matchesFilter = filter === "all" || p.status === filter;
     const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -169,13 +219,16 @@ export default function Projects() {
                       <DropdownMenuItem className="gap-2 text-[13px] py-2.5" onClick={() => navigate(`/projects/${p.id}/edit`)}>
                         <ExternalLink className="h-4 w-4" /> Otvori urednik
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 text-[13px] py-2.5">
+                      <DropdownMenuItem className="gap-2 text-[13px] py-2.5" onClick={() => handleDuplicate(p)}>
                         <Copy className="h-4 w-4" /> Dupliciraj projekat
                       </DropdownMenuItem>
                       <DropdownMenuItem className="gap-2 text-[13px] py-2.5">
                         <Archive className="h-4 w-4" /> Arhiviraj
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 text-[13px] py-2.5 text-danger focus:text-danger focus:bg-danger/10">
+                      <DropdownMenuItem
+                        className="gap-2 text-[13px] py-2.5 text-danger focus:text-danger focus:bg-danger/10"
+                        onClick={() => handleDelete(p.id, p.title)}
+                      >
                         <Trash2 className="h-4 w-4" /> Obriši projekat
                       </DropdownMenuItem>
                     </DropdownMenuContent>

@@ -240,16 +240,16 @@ ALTER TABLE public.collaboration_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_templates ENABLE ROW LEVEL SECURITY;
 
--- Policies
-CREATE POLICY IF NOT EXISTS "section_templates_select_all" ON public.section_templates FOR SELECT USING (true);
+-- Policies (Fixed syntax)
+DO $$ 
+BEGIN 
+    DROP POLICY IF EXISTS "section_templates_select_all" ON public.section_templates;
+    CREATE POLICY "section_templates_select_all" ON public.section_templates FOR SELECT USING (true);
 
--- Projects access upgrade (owner + collaborators)
--- This is handled by a recursive query usually, but simple version:
-CREATE POLICY IF NOT EXISTS "projects_collab_access" ON public.projects 
-  FOR SELECT USING (
-    auth.uid() = owner_id OR 
-    auth.uid() IN (SELECT user_id FROM public.project_collaborators WHERE project_id = id AND status = 'accepted')
-  );
-
--- Continue with other policies as per spec...
--- (I'll keep it concise for the migration but functional)
+    DROP POLICY IF EXISTS "projects_collab_access" ON public.projects;
+    CREATE POLICY "projects_collab_access" ON public.projects 
+      FOR SELECT USING (
+        auth.uid() = owner_id OR 
+        auth.uid() IN (SELECT user_id FROM public.project_collaborators WHERE project_id = id AND status = 'accepted')
+      );
+END $$;

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,6 +22,8 @@ import { APAStatePanel } from "@/components/editor/APAStatePanel";
 import { generateProposalPDF } from "@/lib/pdf-generator";
 import { useAIStream } from "@/hooks/useAIStream";
 import { toast } from "sonner";
+import ChangeRequestPanel from "@/components/editor/ChangeRequestPanel";
+import FinalAssemblyModal from "@/components/editor/FinalAssemblyModal";
 
 export default function ProjectEditor() {
     const { id } = useParams();
@@ -40,6 +42,8 @@ export default function ProjectEditor() {
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
     const [collaborators, setCollaborators] = useState<any[]>([]);
     const [changeLog, setChangeLog] = useState<any[]>([]);
+    const [changeSection, setChangeSection] = useState<any>(null);
+    const [showAssembly, setShowAssembly] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -60,7 +64,7 @@ export default function ProjectEditor() {
 
             if (pError) throw pError;
             setCurrentProject(project as any);
-            setPageTitle(project.title);
+            setPageTitle(project?.title || "Projekat");
 
             const { data: sectionsData, error: sError } = await supabase
                 .from('project_sections')
@@ -122,11 +126,11 @@ export default function ProjectEditor() {
         }
     };
 
-    const handleApprove = async (sectionId: string) => {
+    const handleApprove = useCallback(async (sectionId: string) => {
         try {
             const { error } = await supabase
                 .from('project_sections')
-                .update({ status: 'approved', approved_at: new Date().toISOString() })
+                .update({ status: 'approved', approved_at: new Date().toISOString() } as any)
                 .eq('id', sectionId);
 
             if (error) throw error;
@@ -134,9 +138,9 @@ export default function ProjectEditor() {
         } catch (err) {
             toast.error("Greška pri odobravanju.");
         }
-    };
+    }, [id]);
 
-    const handleRegenerate = async (sectionId: string) => {
+    const handleRegenerate = useCallback(async (sectionId: string) => {
         const section = sections.find(s => s.id === sectionId);
         if (!section || !currentProject) return;
 
@@ -145,7 +149,7 @@ export default function ProjectEditor() {
             updateSection(section.section_key, { ...section, status: 'generating' });
             await supabase
                 .from('project_sections')
-                .update({ status: 'generating' })
+                .update({ status: 'generating' } as any)
                 .eq('id', sectionId);
 
             // Start stream
@@ -170,7 +174,7 @@ export default function ProjectEditor() {
                         content_html: finalContent,
                         status: 'awaiting_approval',
                         version: (section.version || 1) + 1
-                    })
+                    } as any)
                     .eq('id', sectionId);
 
                 if (updError) throw updError;
@@ -182,10 +186,10 @@ export default function ProjectEditor() {
             toast.error("Greška pri generisanju sekcije.");
             await supabase
                 .from('project_sections')
-                .update({ status: 'pending' })
+                .update({ status: 'pending' } as any)
                 .eq('id', sectionId);
         }
-    };
+    }, [sections, currentProject, streamSection, updateSection]);
 
     const handleExportPDF = async () => {
         if (!currentProject) return;
@@ -196,12 +200,68 @@ export default function ProjectEditor() {
             return;
         }
 
+        setShowAssembly(true);
+    };
+
+    const finalizeExport = async () => {
+        setShowAssembly(false);
+        const approvedSections = sections.filter(s => s.status === 'approved');
+
+        if (!currentProject) return;
+
         toast.promise(generateProposalPDF(approvedSections as any, currentProject.title, currentProject.donor_name ?? undefined), {
             loading: 'Generišem industrijski PDF...',
             success: 'Projektni prijedlog uspješno sačuvan!',
             error: 'Greška pri generisanju PDF-a.'
         });
     };
+
+    const handleChangeRequest = useCallback((section: any) => {
+        setChangeSection(section);
+    }, []);
+
+    const handleApplyChange = useCallback(async (description: string) => {
+        if (!changeSection || !currentProject) return;
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Korisnik nije prijavljen");
+
+            // Apply FIX-06 protocol: APA Analysis already shown in UI
+            // Now log the change request in DB
+            await (supabase.from('change_log') as any).insert({
+                project_id: currentProject.id,
+                requested_by: user.id,
+                change_description: description,
+                affected_sections: [changeSection.section_title_bs],
+                status: 'pending'
+            });
+
+            const sId = changeSection.id;
+            setChangeSection(null);
+            handleRegenerate(sId);
+            toast.success("Izmjena registrovana i sekcija se ponovo piše.");
+        } catch (err) {
+            console.error("Change apply error:", err);
+            toast.error("Greška pri bilježenju izmjene.");
+        }
+    }, [changeSection, currentProject, handleRegenerate]);
+
+    const approvedCount = useMemo(() =>
+        sections.filter(s => s.status === 'approved').length,
+        [sections]);
+
+    const renderedSections = useMemo(() =>
+        sections.map((section) => (
+            <SectionCard
+                key={section.id}
+                section={section as any}
+                onApprove={handleApprove}
+                onRegenerate={handleRegenerate}
+                onEdit={() => handleChangeRequest(section)}
+            />
+        )),
+        [sections, handleApprove, handleRegenerate, handleChangeRequest]);
 
     if (loading) {
         return (
@@ -212,7 +272,6 @@ export default function ProjectEditor() {
         );
     }
 
-    const approvedCount = sections.filter(s => s.status === 'approved').length;
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden -m-6 bg-bg-primary">
@@ -269,17 +328,27 @@ export default function ProjectEditor() {
                         <RIPPhase />
 
                         {/* Sections */}
-                        {sections.map((section) => (
-                            <SectionCard
-                                key={section.id}
-                                section={section as any}
-                                onApprove={handleApprove}
-                                onRegenerate={handleRegenerate}
-                                onEdit={(id) => toast.info(`Uređivanje sekcije ${id}`)}
-                            />
-                        ))}
+                        {renderedSections}
                     </div>
                 </div>
+
+                {/* Change Request Panel [FIX-06] */}
+                {changeSection && (
+                    <ChangeRequestPanel
+                        sectionTitle={changeSection.section_title_bs}
+                        onApply={handleApplyChange}
+                        onCancel={() => setChangeSection(null)}
+                    />
+                )}
+
+                {/* Final Assembly Modal [FIX-08] */}
+                {showAssembly && (
+                    <FinalAssemblyModal
+                        sections={sections}
+                        onComplete={finalizeExport}
+                        onCancel={() => setShowAssembly(false)}
+                    />
+                )}
 
                 {/* Glass Overlay for Streaming */}
                 <AnimatePresence>

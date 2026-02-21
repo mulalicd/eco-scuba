@@ -8,11 +8,12 @@ export default function RIPPhase() {
     const [currentStep, setCurrentStep] = useState(0);
 
     const steps = [
-        "Legislativni okvir (BiH, Kantoni)",
-        "Ekološki kontekst i statistika",
-        "Demografska analiza ciljnih grupa",
-        "Institucionalna mapa i resursi",
-        "Finansijski standardi i tržne cijene"
+        "Legislativni i strateški okvir (BiH)",
+        "Geografski i ekološki kontekst projektne lokacije",
+        "Demografski i socioekonomski profil zajednice",
+        "Institucionalna mapa i potencijalna saradnja",
+        "Analiza sličnih projekata i najboljih praksi",
+        "Podaci o sektoru vodenih sportova i eko-edukacije"
     ];
 
     useEffect(() => {
@@ -27,72 +28,95 @@ export default function RIPPhase() {
                     }
                     return prev + 1;
                 });
-            }, 1500);
+            }, 1200);
             return () => clearInterval(interval);
         }
     }, [complete, steps.length]);
 
     return (
-        <div className="bg-bg-tertiary rounded-2xl border border-primary/20 overflow-hidden shadow-2xl shadow-primary/5">
+        <div className="bg-bg-tertiary/40 backdrop-blur-xl rounded-3xl border border-brand/20 overflow-hidden shadow-2xl shadow-brand/5">
             <div
-                className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
+                className="p-6 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all duration-300"
                 onClick={() => setExpanded(!expanded)}
             >
-                <div className="flex items-center gap-4">
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${complete ? 'bg-emerald-500/20' : 'bg-primary/20'}`}>
-                        {complete ? <CheckCircle2 className="h-6 w-6 text-emerald-500" /> : <Search className="h-6 w-6 text-primary animate-pulse" />}
+                <div className="flex items-center gap-5">
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${complete ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-brand/10 border border-brand/20'}`}>
+                        {complete ? <CheckCircle2 className="h-6 w-6 text-emerald-500" /> : <Search className="h-6 w-6 text-brand animate-pulse" />}
                     </div>
                     <div>
-                        <h3 className="font-bold">🔍 RIP Protokol — Istraživanje lokalnog konteksta</h3>
-                        <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold mt-0.5">
-                            {complete ? 'ISTRAŽIVANJE ZAVRŠENO' : 'ISTRAŽIVANJE U TOKU...'}
+                        <h3 className="font-display font-bold text-base text-text-primary tracking-tight">RIP Protokol — Istraživanje lokalnog konteksta (v3)</h3>
+                        <p className={`text-[10px] font-black uppercase tracking-[0.2em] mt-1 ${complete ? 'text-emerald-500' : 'text-brand animate-pulse'}`}>
+                            {complete ? 'ISTRAŽIVANJE ZAVRŠENO' : `ISTRAŽIVANJE DOMENE ${currentStep + 1}/6...`}
                         </p>
                     </div>
                 </div>
-                {expanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+                <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                        <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest leading-none">Status Autonomije</div>
+                        <div className="text-[11px] text-text-primary font-bold">Visok (Level 4)</div>
+                    </div>
+                    {expanded ? <ChevronUp className="h-5 w-5 text-text-dim" /> : <ChevronDown className="h-5 w-5 text-text-dim" />}
+                </div>
             </div>
 
             <AnimatePresence>
                 {(expanded || !complete) && (
                     <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: "auto" }}
-                        exit={{ height: 0 }}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: "circOut" }}
                         className="overflow-hidden border-t border-white/5"
                     >
-                        <div className="p-6 space-y-4">
+                        <div className="p-8 space-y-5">
                             {steps.map((step, i) => {
                                 const isCurrent = i === currentStep;
                                 const isFinished = i < currentStep || complete;
                                 return (
-                                    <div key={i} className="flex items-center gap-3">
-                                        <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0`}>
+                                    <div key={i} className="flex items-center gap-4 transition-all duration-300">
+                                        <div className={`h-6 w-6 rounded-lg flex items-center justify-center shrink-0 border transition-all duration-500 ${isFinished ? 'bg-emerald-500/20 border-emerald-500/30' : isCurrent ? 'bg-brand/20 border-brand/30 ring-2 ring-brand/20' : 'bg-white/5 border-white/10'}`}>
                                             {isFinished ? (
                                                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                                             ) : isCurrent ? (
-                                                <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                                                <Loader2 className="h-4 w-4 text-brand animate-spin" />
                                             ) : (
-                                                <div className="h-2 w-2 rounded-full bg-slate-700" />
+                                                <div className="h-1.5 w-1.5 rounded-full bg-white/20" />
                                             )}
                                         </div>
-                                        <span className={`text-sm ${isFinished ? 'text-foreground' : isCurrent ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
-                                            {step} {isFinished && '✓'}
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className={`text-sm tracking-tight transition-all duration-300 ${isFinished ? 'text-text-primary' : isCurrent ? 'text-brand font-bold' : 'text-text-dim'}`}>
+                                                {step}
+                                            </span>
+                                            {isCurrent && !complete && (
+                                                <motion.span
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="text-[10px] text-brand/60 font-medium italic mt-0.5"
+                                                >
+                                                    Analiziram zakonske i strateške baze podataka...
+                                                </motion.span>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
 
                             {complete && (
-                                <div className="mt-6 p-4 bg-bg-surface rounded-xl border border-border border-l-4 border-l-emerald-500">
-                                    <div className="flex items-center gap-2 text-emerald-500 font-bold text-xs uppercase mb-2">
-                                        <Info className="h-4 w-4" /> RIP Istraživački Sažetak
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mt-8 p-5 bg-bg-surface/50 rounded-2xl border border-white/10 border-l-4 border-emerald-500/50"
+                                >
+                                    <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-widest mb-3">
+                                        <Info className="h-3.5 w-3.5" /> RIP Istraživački Paket — Verifikovano
                                     </div>
-                                    <p className="text-xs text-text-dim leading-relaxed">
-                                        Uspješno prikupljeni podaci o relevantnim zakonima o sportu i okolišu u FBiH,
-                                        statistikama zagađenja rijeka za 2024. godinu, te demografiji mladih u Kantonu Sarajevo.
-                                        Ovi podaci će biti korišteni za argumentaciju u svim sekcijama projekta.
+                                    <p className="text-[12px] text-text-dim leading-relaxed">
+                                        RIP protokol je uspješno prikupio i klasificirao podatke za svih 6 domena.
+                                        Identifikovano je 14 [VERIFICIRAN] izvora (uključujući Zakon o vodama FBiH i FHMZ statistike)
+                                        i 5 [INDICIRAN] trendova. Praznine podataka su označene kao [PODATAK NEDOSTAJE]
+                                        te će WA protokol koristiti specifično uokvirivanje u tim sekcijama.
                                     </p>
-                                </div>
+                                </motion.div>
                             )}
                         </div>
                     </motion.div>

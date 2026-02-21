@@ -88,6 +88,8 @@ export default function Register() {
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="fullName"
+                  name="fullName"
+                  autoComplete="name"
                   placeholder="Vaše ime"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -103,7 +105,9 @@ export default function Register() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="vas@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -119,7 +123,9 @@ export default function Register() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="Najmanje 8 znakova"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -143,7 +149,9 @@ export default function Register() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="Ponovite lozinku"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

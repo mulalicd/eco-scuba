@@ -66,27 +66,39 @@ export default function NewProjectWizard({ open, onOpenChange }: Props) {
 
             const projectData = project as any;
 
-            // 2. Initialize default sections
-            const defaultSections = [
-                { key: 'uvod', title: 'Uvod i pozadina' },
-                { key: 'problem', title: 'Opis problema' },
-                { key: 'ciljevi', title: 'Ciljevi i rezultati' },
-                { key: 'aktivnosti', title: 'Metodologija i aktivnosti' },
-                { key: 'budzet', title: 'Budžet i resursi' }
+            // 2. Initialize mandatory sections from v3 instructions
+            const mandatorySections = [
+                { key: 'naslovna_strana', title: 'Naslovna strana', order: 0 },
+                { key: 'uvod', title: 'Uvod', order: 1 },
+                { key: 'sazetak', title: 'Sažetak', order: 2 },
+                { key: 'potreba_problem', title: 'Potreba/problem u lokalnoj zajednici', order: 3 },
+                { key: 'razlozi_znacaj', title: 'Razlozi i značaj projekta', order: 4 },
+                { key: 'ciljevi_projekta', title: 'Ciljevi projekta', order: 5 },
+                { key: 'ciljna_grupa', title: 'Ciljna grupa', order: 6 },
+                { key: 'sveukupni_cilj', title: 'Sveukupni cilj projekta', order: 7 },
+                { key: 'specificni_ciljevi', title: 'Specifični ciljevi projekta', order: 8 },
+                { key: 'ocekivani_rezultati', title: 'Očekivani rezultati', order: 9 },
+                { key: 'aktivnosti', title: 'Aktivnosti', order: 10 },
+                { key: 'pretpostavke_rizici', title: 'Pretpostavke i rizici', order: 11 },
+                { key: 'trajanje_projekta', title: 'Trajanje projekta', order: 12 },
+                { key: 'pracenje', title: 'Praćenje provedbe i izvještavanje', order: 13 },
+                { key: 'budzet', title: 'Budžet', order: 14 },
+                { key: 'vidljivost', title: 'Vidljivost (Promocija projekta)', order: 15 },
+                { key: 'lista_aneksa', title: 'Lista aneksa', order: 16 }
             ];
 
-            const sectionsToInsert = defaultSections.map((s, i) => ({
+            const sectionsToInsert = mandatorySections.map((s) => ({
                 project_id: projectData.id,
                 section_key: s.key,
                 section_title_bs: s.title,
-                display_order: i,
+                display_order: s.order,
                 status: 'pending'
             }));
 
             const { error: sError } = await supabase.from('project_sections').insert(sectionsToInsert as any);
             if (sError) console.warn("Sections init warning:", sError);
 
-            toast.success("Projekat uspješno inicijaliziran!");
+            toast.success("Projekat uspješno inicijaliziran prema v3 protokolu!");
             onOpenChange(false);
             navigate(`/projects/${projectData.id}/edit`);
 

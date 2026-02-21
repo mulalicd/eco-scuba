@@ -15,7 +15,8 @@ export default function NotificationBell() {
 
     useEffect(() => {
         fetchNotifications();
-        subscribeToNotifications();
+        const cleanup = subscribeToNotifications();
+        return cleanup;
     }, []);
 
     const fetchNotifications = async () => {
