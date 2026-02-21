@@ -27,10 +27,12 @@ export function useAIStream() {
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Session expired — please log in again');
+            if (!session) throw new Error('Sesija je istekla — molimo prijavite se ponovo');
 
-            // Note: We use the actual base URL from environment
-            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            // Use the client's internal config to ensure absolute consistency
+            const supabaseUrl = (supabase as any).supabaseUrl;
+            const supabaseKey = (supabase as any).supabaseKey;
+
             const response = await fetch(
                 `${supabaseUrl}/functions/v1/ai-generate-section`,
                 {
@@ -38,6 +40,7 @@ export function useAIStream() {
                     signal: abortRef.current.signal,
                     headers: {
                         'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': supabaseKey,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(params),
