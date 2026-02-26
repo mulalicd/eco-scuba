@@ -60,8 +60,14 @@ git add .
 echo  [2/3] Kreiranje commit-a: "!msg!"...
 git commit -m "!msg!"
 
+echo  [3/3] Sinhronizacija s remote repozitorijem...
+git pull origin main --rebase
+if %errorlevel% neq 0 (
+    echo  [INFO] Pull/rebase nije uspio, pokusavam bez rebase...
+    git pull origin main --no-rebase
+)
+
 echo  [3/3] Slanje na GitHub (push)...
-:: Try to push to main, if fails try master, otherwise let git decide
 git push origin main
 if %errorlevel% neq 0 (
     echo  [INFO] Pokusavam push na 'master' granu...
@@ -71,11 +77,11 @@ if %errorlevel% neq 0 (
 if %errorlevel% equ 0 (
     echo.
     echo  ==========================================================
-    echo  [USPJEH] Projekat je usmjesno poslan na GitHub!
+    echo  [USPJEH] Projekat je uspjesno poslan na GitHub!
     echo  ==========================================================
 ) else (
     echo.
-    echo  [GRESKA] Slanje na GitHub nije uspjelo. 
+    echo  [GRESKA] Slanje na GitHub nije uspjelo.
     echo  Provjerite internet konekciju i dozvole za repozitorij.
 )
 
