@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Waves, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ParticleBackground from "@/components/auth/ParticleBackground";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
@@ -127,7 +127,7 @@ export default function Login() {
             </div>
 
             <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-xs text-primary hover:text-accent transition-colors">
+              <Link to="/forgot-password" university-link="true" className="text-xs text-primary hover:text-accent transition-colors">
                 Zaboravili ste lozinku?
               </Link>
             </div>

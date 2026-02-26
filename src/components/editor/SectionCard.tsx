@@ -3,6 +3,7 @@ import { Check, Edit3, RotateCcw, Sparkles, AlertTriangle, Loader2 } from "lucid
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { DisclaimerBanner } from "./DisclaimerBanner";
+import { parseRIPStatus } from "@/lib/rip-parser";
 
 interface Props {
     section: {
@@ -70,7 +71,7 @@ export default function SectionCard({ section, onApprove, onEdit, onRegenerate }
                 ) : section.content_html ? (
                     <div
                         className="text-text-primary leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: section.content_html }}
+                        dangerouslySetInnerHTML={{ __html: parseRIPStatus(section.content_html) }}
                     />
                 ) : (
                     <div className="py-12 flex flex-col items-center justify-center text-center opacity-50">

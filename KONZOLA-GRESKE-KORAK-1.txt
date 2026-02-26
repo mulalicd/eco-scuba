@@ -1,0 +1,135 @@
+client:495 [vite] connecting...
+client:618 [vite] connected.
+chunk-W6L2VRDA.js?v=f3ff697c:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+useAIStream.ts:43 [Oracle] Probam model: gemini-2.0-flash (v1beta)
+useAIStream.ts:48 [Oracle] Trying Key: AIzaSyDf...
+useAIStream.ts:75  POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=AIzaSyDf4XEjH1S9-BFppCXzVE8PbLd8pec8vRs 429 (Too Many Requests)
+(anonymous) @ useAIStream.ts:75
+startAnalysis @ Step0PublicCall.tsx:37
+await in startAnalysis
+callCallback2 @ chunk-W6L2VRDA.js?v=f3ff697c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=f3ff697c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=f3ff697c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=f3ff697c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=f3ff697c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=f3ff697c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=f3ff697c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=f3ff697c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=f3ff697c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=f3ff697c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=f3ff697c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=f3ff697c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=f3ff697c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5449
+useAIStream.ts:90 [Oracle Skip] gemini-2.0-flash/v1beta (429): [{
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on 
+(anonymous) @ useAIStream.ts:90
+await in (anonymous)
+startAnalysis @ Step0PublicCall.tsx:37
+await in startAnalysis
+callCallback2 @ chunk-W6L2VRDA.js?v=f3ff697c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=f3ff697c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=f3ff697c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=f3ff697c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=f3ff697c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=f3ff697c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=f3ff697c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=f3ff697c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=f3ff697c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=f3ff697c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=f3ff697c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=f3ff697c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=f3ff697c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5449
+useAIStream.ts:48 [Oracle] Trying Key: AIzaSyBG...
+useAIStream.ts:75  POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=AIzaSyBGDghWkSSBnShnV5OuK9R2El0Lhgs75E4 429 (Too Many Requests)
+(anonymous) @ useAIStream.ts:75
+await in (anonymous)
+startAnalysis @ Step0PublicCall.tsx:37
+await in startAnalysis
+callCallback2 @ chunk-W6L2VRDA.js?v=f3ff697c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=f3ff697c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=f3ff697c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=f3ff697c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=f3ff697c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=f3ff697c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=f3ff697c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=f3ff697c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=f3ff697c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=f3ff697c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=f3ff697c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=f3ff697c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=f3ff697c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5449
+useAIStream.ts:90 [Oracle Skip] gemini-2.0-flash/v1beta (429): [{
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on 
+(anonymous) @ useAIStream.ts:90
+await in (anonymous)
+startAnalysis @ Step0PublicCall.tsx:37
+await in startAnalysis
+callCallback2 @ chunk-W6L2VRDA.js?v=f3ff697c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=f3ff697c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=f3ff697c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=f3ff697c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=f3ff697c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=f3ff697c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=f3ff697c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=f3ff697c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=f3ff697c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=f3ff697c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=f3ff697c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=f3ff697c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=f3ff697c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5449
+useAIStream.ts:48 [Oracle] Trying Key: AIzaSyBv...
+useAIStream.ts:75  POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=AIzaSyBvP41eaja6DRNmwh-Padd_UEUfealCZE0 429 (Too Many Requests)
+(anonymous) @ useAIStream.ts:75
+await in (anonymous)
+startAnalysis @ Step0PublicCall.tsx:37
+await in startAnalysis
+callCallback2 @ chunk-W6L2VRDA.js?v=f3ff697c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=f3ff697c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=f3ff697c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=f3ff697c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=f3ff697c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=f3ff697c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=f3ff697c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=f3ff697c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=f3ff697c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=f3ff697c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=f3ff697c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=f3ff697c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=f3ff697c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5449
+useAIStream.ts:90 [Oracle Skip] gemini-2.0-flash/v1beta (429): [{
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on 
+(anonymous) @ useAIStream.ts:90
+await in (anonymous)
+startAnalysis @ Step0PublicCall.tsx:37
+await in startAnalysis
+callCallback2 @ chunk-W6L2VRDA.js?v=f3ff697c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=f3ff697c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=f3ff697c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=f3ff697c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=f3ff697c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=f3ff697c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=f3ff697c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=f3ff697c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=f3ff697c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=f3ff697c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=f3ff697c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=f3ff697c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=f3ff697c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=f3ff697c:5449

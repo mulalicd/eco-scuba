@@ -113,11 +113,15 @@ export interface FormAnalysis {
 
 export interface ChangeLogEntry {
     id: string;
-    timestamp: string;
-    description: string;
+    project_id: string;
+    requested_by: string;
+    change_description: string;
     affected_sections: string[];
-    apa_analysis: string;
+    apa_analysis: string | null;
+    apa_elaboration: string | null;
     status: 'pending' | 'approved_by_user' | 'applied' | 'rejected';
+    applied_at: string | null;
+    created_at: string;
 }
 
 export interface Notification {

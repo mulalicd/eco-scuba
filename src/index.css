@@ -1,129 +1,143 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --bg-primary: #0a0f1e;
-  --bg-secondary: #0d1829;
-  --bg-tertiary: #111f35;
-  --bg-surface: #162340;
-  --bg-glass: rgba(13, 24, 41, 0.85);
-  --brand: #0ea5e9;
-  --brand-cyan: #06b6d4;
-  --brand-light: #38bdf8;
-  --text-primary: #f0f6ff;
-  --text-muted: #94b4d4;
-  --text-dim: #4d7094;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+@layer base {
+  :root {
+    /* Deep Water Professionalism — Dark Theme Only */
+    --background: 222 60% 7%;
+    --foreground: 214 80% 96%;
 
-  /* Radix UI / Shadcn compatibility - using HSL values without hsl() wrapper */
-  --background: 222 60% 7%;
-  --foreground: 214 80% 96%;
-  --card: 217 55% 10%;
-  --card-foreground: 214 80% 96%;
-  --popover: 217 55% 10%;
-  --popover-foreground: 214 80% 96%;
-  --primary: 199 89% 48%;
-  --primary-foreground: 222 60% 7%;
-  --secondary: 217 40% 16%;
-  --secondary-foreground: 214 80% 96%;
-  --muted: 217 40% 16%;
-  --muted-foreground: 217 40% 46%;
-  --accent: 199 89% 48%;
-  --accent-foreground: 222 60% 7%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 214 80% 96%;
-  --border: 199 89% 48% / 0.18;
-  --input: 199 89% 48% / 0.18;
-  --ring: 199 89% 48%;
-  --radius: 0.75rem;
+    --card: 217 55% 10%;
+    --card-foreground: 214 80% 96%;
 
-  --border-strong: rgba(14, 165, 233, 0.45);
+    --popover: 217 50% 12%;
+    --popover-foreground: 214 80% 96%;
+
+    --primary: 199 89% 48%;
+    --primary-foreground: 222 60% 7%;
+
+    --secondary: 187 72% 42%;
+    --secondary-foreground: 222 60% 7%;
+
+    --muted: 217 40% 16%;
+    --muted-foreground: 207 35% 56%;
+
+    --accent: 199 100% 60%;
+    --accent-foreground: 222 60% 7%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 214 80% 96%;
+
+    --success: 160 60% 45%;
+    --success-foreground: 222 60% 7%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 60% 7%;
+
+    --border: 199 89% 48% / 0.12;
+    --input: 199 89% 48% / 0.15;
+    --ring: 199 89% 48%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --bg-surface: 216 50% 15%;
+    --bg-glass: 217 55% 10% / 0.85;
+    --brand-deep: 204 90% 32%;
+    --glow: 190 100% 50%;
+    --glow-soft: 199 89% 48% / 0.08;
+    --glow-ring: 0 0 0 1px hsl(199 89% 48% / 0.3), 0 0 12px hsl(199 89% 48% / 0.15);
+    --border-subtle: 199 89% 48% / 0.12;
+    --border-default: 199 89% 48% / 0.25;
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px hsl(199 89% 48% / 0.15), 0 0 40px hsl(199 89% 48% / 0.05);
+
+    --sidebar-background: 222 60% 5%;
+    --sidebar-foreground: 214 80% 96%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 222 60% 7%;
+    --sidebar-accent: 217 40% 14%;
+    --sidebar-accent-foreground: 214 80% 96%;
+    --sidebar-border: 199 89% 48% / 0.1;
+    --sidebar-ring: 199 89% 48%;
+    
+    /* compatibility for old variables */
+    --bg-primary: #0a0f1e;
+    --bg-secondary: #0d1829;
+    --bg-tertiary: #111f35;
+    --brand: #0ea5e9;
+    --text-primary: #f0f6ff;
+    --text-dim: #4d7094;
+  }
 }
 
 @layer base {
   * {
-    /* Using native CSS instead of @apply to avoid IDE/Linter warnings while maintaining theme consistency */
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
 
   body {
+    @apply bg-background text-foreground font-sans antialiased;
     font-family: 'DM Sans', sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     font-family: 'Syne', sans-serif;
   }
-}
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--brand);
-}
-
-/* Text selection */
-::-selection {
-  background: rgba(14, 165, 233, 0.25);
-  color: var(--text-primary);
-}
-
-/* Skeleton shimmer utility */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 2s linear infinite;
-  border-radius: 6px;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-
-  100% {
-    background-position: 200% 0;
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(199 89% 48% / 0.2);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(199 89% 48% / 0.35);
   }
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 2.5s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 10px rgba(14, 165, 233, 0.15);
+@layer utilities {
+  .glass {
+    background: hsl(var(--bg-glass));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
-  50% {
-    box-shadow: 0 0 30px rgba(14, 165, 233, 0.4);
+  .glow-border {
+    box-shadow: var(--glow-ring);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-ocean {
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(217 55% 10%) 50%, hsl(216 50% 15%) 100%);
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, transparent 0%, hsl(199 89% 48% / 0.05) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 }

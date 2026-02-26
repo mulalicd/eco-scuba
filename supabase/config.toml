@@ -1,1 +1,7 @@
 project_id = "fmqxjqoqtwslhkwddgla"
+
+[functions.process-form-upload]
+verify_jwt = false
+
+[functions.ai-generate-section]
+verify_jwt = false

@@ -1,5 +1,6 @@
+// src/components/layout/AppShell.tsx
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
+import AppSidebar from './AppSidebar';
 import TopNav from './TopNav';
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
@@ -8,11 +9,11 @@ export default function AppShell() {
   const { sidebarOpen, pageTitle } = useUIStore();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-primary">
-      <Sidebar />
+    <div className="flex h-screen overflow-hidden bg-bg-primary text-text-primary">
+      <AppSidebar />
       <div className={cn(
         'flex flex-col flex-1 overflow-hidden transition-all duration-300',
-        sidebarOpen ? 'ml-64' : 'ml-16'
+        sidebarOpen ? 'ml-[260px]' : 'ml-[72px]'
       )}>
         <TopNav title={pageTitle} />
         <main className="flex-1 overflow-y-auto p-6">

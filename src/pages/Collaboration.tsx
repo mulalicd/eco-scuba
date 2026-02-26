@@ -14,7 +14,7 @@ import {
 import { useUIStore } from "@/store/uiStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
     DropdownMenu,
@@ -122,8 +122,8 @@ export default function Collaboration() {
                                         >
                                             <div className="flex items-start justify-between mb-2">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${task.priority === 'urgent' ? 'bg-red-500/10 text-red-500' :
-                                                        task.priority === 'high' ? 'bg-amber-500/10 text-amber-500' :
-                                                            'bg-blue-500/10 text-blue-500'
+                                                    task.priority === 'high' ? 'bg-amber-500/10 text-amber-500' :
+                                                        'bg-blue-500/10 text-blue-500'
                                                     }`}>
                                                     {task.priority}
                                                 </span>

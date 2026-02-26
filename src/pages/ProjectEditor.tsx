@@ -13,8 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store/uiStore";
 import { useProjectStore } from "@/store/projectStore";
-import { supabase } from "@/integrations/supabase/client";
-import { Project, ProjectSection } from "@/types";
+import { supabase } from "@/lib/supabase";
+import { Project, ProjectSection, ChangeLogEntry, Profile } from "@/types";
 import { SectionNavigator } from "@/components/editor/SectionNavigator";
 import SectionCard from "@/components/editor/SectionCard";
 import RIPPhase from "@/components/editor/RIPPhase";
@@ -24,6 +24,14 @@ import { useAIStream } from "@/hooks/useAIStream";
 import { toast } from "sonner";
 import ChangeRequestPanel from "@/components/editor/ChangeRequestPanel";
 import FinalAssemblyModal from "@/components/editor/FinalAssemblyModal";
+
+interface ProjectCollaborator {
+    id: string;
+    user_id: string;
+    role: 'owner' | 'editor' | 'reviewer' | 'viewer';
+    status: 'pending' | 'accepted' | 'declined';
+    profiles?: Profile;
+}
 
 export default function ProjectEditor() {
     const { id } = useParams();
@@ -40,9 +48,9 @@ export default function ProjectEditor() {
     const { content: streamingContent, isStreaming, streamSection } = useAIStream();
     const [loading, setLoading] = useState(true);
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-    const [collaborators, setCollaborators] = useState<any[]>([]);
-    const [changeLog, setChangeLog] = useState<any[]>([]);
-    const [changeSection, setChangeSection] = useState<any>(null);
+    const [collaborators, setCollaborators] = useState<ProjectCollaborator[]>([]);
+    const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
+    const [changeSection, setChangeSection] = useState<ProjectSection | null>(null);
     const [showAssembly, setShowAssembly] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +88,7 @@ export default function ProjectEditor() {
                 .select('*, profiles(*)')
                 .eq('project_id', id);
 
-            setCollaborators(collabData || []);
+            setCollaborators((collabData as any) || []);
 
             const { data: logData } = await supabase
                 .from('change_log')
@@ -88,7 +96,7 @@ export default function ProjectEditor() {
                 .eq('project_id', id)
                 .order('created_at', { ascending: false });
 
-            setChangeLog(logData || []);
+            setChangeLog((logData as any) || []);
 
         } catch (err) {
             console.error("Error fetching project data:", err);

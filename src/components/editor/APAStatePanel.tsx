@@ -139,18 +139,25 @@ export function APAStatePanel({ projectTitle, sections, collaborators, ripStatus
                             {changeLog.length > 0 ? changeLog.map((c, i) => (
                                 <div key={i} className="relative pl-6 pb-2 border-l border-brand/20 last:pb-0">
                                     <div className="absolute left-[-5px] top-0 h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_10px_rgba(14,165,233,0.6)] border border-white" />
-                                    <p className="text-[11px] font-black text-text-primary mr-1 tracking-tight">{c.section}</p>
+                                    <p className="text-[11px] font-black text-text-primary mr-1 tracking-tight">
+                                        {c.affected_sections?.length > 0 ? c.affected_sections.join(', ') : "Globalna izmjena"}
+                                    </p>
                                     <p className="text-[10px] text-text-muted mt-2 leading-relaxed font-medium">
-                                        {c.description}
+                                        {c.change_description}
                                     </p>
                                     <div className="mt-4 p-2 rounded-lg bg-bg-tertiary/50 border border-white/5">
                                         <p className="text-[9px] text-brand font-bold uppercase tracking-widest mb-1">Status Propagacije</p>
                                         <div className="flex items-center gap-2">
-                                            <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                                            <span className="text-[9px] text-text-dim font-bold">Uspješno primijenjeno na 3 sekcije</span>
+                                            <div className={cn(
+                                                "h-1 w-1 rounded-full",
+                                                c.status === 'applied' ? "bg-emerald-500" : "bg-amber-500"
+                                            )} />
+                                            <span className="text-[9px] text-text-dim font-bold">
+                                                {c.status === 'applied' ? "Uspješno primijenjeno" : "Čeka na primjenu"}
+                                            </span>
                                         </div>
                                     </div>
-                                    <p className="text-[9px] text-text-dim mt-4 font-bold">{c.timestamp}</p>
+                                    <p className="text-[9px] text-text-dim mt-4 font-bold">{new Date(c.created_at).toLocaleDateString('bs-BA')}</p>
                                 </div>
                             )) : (
                                 <div className="text-center py-12 opacity-20">

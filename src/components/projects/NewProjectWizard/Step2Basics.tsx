@@ -84,6 +84,7 @@ export default function Step2Basics({ data, onNext, onBack }: Props) {
                                         <SelectContent>
                                             <SelectItem value="bs">Bosanski</SelectItem>
                                             <SelectItem value="en">Engleski</SelectItem>
+                                            <SelectItem value="hr">Hrvatski</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

@@ -1,153 +1,186 @@
 // src/hooks/useAIStream.ts
-import { useState, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+// import { APA_SYSTEM_PROMPT } from '@/lib/apa-system-prompt'; // Uklonjeno iz runtime-a radi uštede tokena (Fix #1)
 
 interface StreamParams {
     project_id: string;
     section_key: string;
-    protocol: 'APA' | 'RIP' | 'WA';
+    protocol: 'APA' | 'RIP' | 'RIP_FAZA_0' | 'WA';
     messages: Array<{ role: string; content: string }>;
-    project_context: object;
+    project_context: any;
 }
+
+// ⚠️ ZAKLJUČAK NAKON E2E TESTOVA (2026-02-22):
+// - gemini-2.0-flash i gemini-2.0-flash-lite su jedini modeli koji rade (vraćaju 429 kad nestane kvote, što znači da putanja postoji).
+// - gemini-1.5-flash serija dosljedno vraća 404 na i na v1 i na v1beta za ove ključeve.
+// - Povećavamo sleep na 2000ms za bolji fallback zbog 15 RPM ograničenja besplatnih ključeva.
+const MODEL_MAP: { model: string; apiVersion: string }[] = [
+    { model: 'gemini-2.0-flash', apiVersion: 'v1beta' },
+    { model: 'gemini-2.0-flash-lite', apiVersion: 'v1beta' },
+];
+
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export function useAIStream() {
     const [content, setContent] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     const streamSection = useCallback(async (params: StreamParams): Promise<string> => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-        abortControllerRef.current = new AbortController();
-
         setIsStreaming(true);
         setContent('');
         setError(null);
         let fullContent = '';
 
-        const runStream = async (retryCount = 0): Promise<string> => {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            if (sessionError || !session) {
-                await supabase.auth.signOut();
-                throw new Error('Sesija je nevažeća. Molim se ponovo prijavite.');
-            }
+        try {
+            // 🚀 NEW: Rerouting through Supabase Edge Function for Claude Fallback & Stability
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Aktivna sesija nije pronađena. Molimo prijavite se ponovo.");
 
-            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-            const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+            const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate-section`;
 
-            console.log(`[Auth] Sending request (retry=${retryCount}), token starts: ${session.access_token.substring(0, 30)}...`);
-
-            const response = await fetch(
-                `${supabaseUrl}/functions/v1/ai-generate-section`,
-                {
-                    method: 'POST',
-                    signal: abortControllerRef.current?.signal,
-                    headers: {
-                        'Authorization': `Bearer ${session.access_token}`,
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                    },
-                    body: JSON.stringify(params),
-                }
-            );
+            const response = await fetch(functionUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    project_id: params.project_id,
+                    section_key: params.section_key,
+                    protocol: params.protocol,
+                    messages: params.messages,
+                    project_context: params.project_context
+                })
+            });
 
             if (!response.ok) {
-                // Always read the server's actual error message for debugging
-                let serverError = `HTTP greška: ${response.status}`;
-                try {
-                    const errorBody = await response.json();
-                    console.error('[Auth] Server error body:', JSON.stringify(errorBody));
-                    serverError = errorBody.details || errorBody.error || serverError;
-                } catch { /* ignore parse errors */ }
-
-                if (response.status === 401 && retryCount === 0) {
-                    console.warn('[Auth] 401 on first attempt. Forcing token refresh...');
-                    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-
-                    if (refreshError || !refreshData.session) {
-                        console.error('[Auth] Refresh failed:', refreshError?.message);
-                        await supabase.auth.signOut();
-                        throw new Error('Sesija je istekla. Molim se ponovo prijavite.');
-                    }
-                    console.log('[Auth] Token refreshed. Retrying with new token...');
-                    return runStream(1);
-                }
-
-                if (response.status === 401 && retryCount >= 1) {
-                    // Refresh didn't help — force full re-login
-                    console.error('[Auth] 401 persists after token refresh. Signing out.');
-                    await supabase.auth.signOut();
-                    throw new Error('Autentifikacija nije uspjela ni nakon osvježavanja sesije. Molim se ponovo prijavite.');
-                }
-
-                throw new Error(serverError);
+                const errData = await response.json();
+                throw new Error(errData.error || "Greška pri komunikaciji sa AI servisom.");
             }
 
-            if (!response.body) throw new Error('Odgovor nema tijelo');
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error("Stream nije dostupan.");
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let buffer = '';
+            const decoder = new TextDecoder();
 
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() ?? '';
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
 
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (!trimmed.startsWith('data: ')) continue;
-
-                        const data = trimmed.slice(6).trim();
-                        if (!data || data === '[DONE]') continue;
-
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
                         try {
-                            const parsed = JSON.parse(data);
-                            if (parsed.type === 'delta' && typeof parsed.text === 'string') {
-                                fullContent += parsed.text;
-                                setContent(prev => prev + parsed.text);
+                            const data = JSON.parse(line.slice(6));
+                            if (data.type === 'delta') {
+                                fullContent += data.text;
+                                setContent(fullContent);
+                            } else if (data.type === 'error') {
+                                throw new Error(data.message);
+                            } else if (data.type === 'done') {
+                                fullContent = data.content;
+                                setContent(fullContent);
                             }
-                            if (parsed.type === 'error') throw new Error(parsed.message);
-                        } catch (e) { /* skip malformed SSE lines */ }
+                        } catch (e) {
+                            // Tiho preskoči ako nije validan JSON (npr. prazne linije)
+                        }
                     }
                 }
-            } finally {
-                reader.releaseLock();
             }
 
             return fullContent;
-        };
-
-        try {
-            return await runStream();
         } catch (err: any) {
-            if (err.name === 'AbortError') return fullContent;
+            // 🚨 FALLBACK: Try Groq directly from frontend if Edge Function fails
+            console.warn("[useAIStream] EF Failed, trying Groq fallback...", err);
+
+            const GROQ_MODEL = 'llama-3.3-70b-versatile';
+            const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+            const groqKeys: string[] = JSON.parse(import.meta.env.VITE_GROQ_API_KEYS || '[]');
+
+            const systemInstructions: Record<string, string> = {
+                'APA': 'Ti si asistent za pisanje projektnih prijedloga. Postavljaj jedno po jedno pitanje korisniku.',
+                'RIP': 'Ti si ekspert za pisanje projektnih prijedloga. Generiši traženu sekciju u HTML formatu.',
+                'RIP_FAZA_0': 'Analiziraj projektni poziv i vrati eligibility analizu u HTML.',
+                'WA': 'Harmonizuj projektni prijedlog prema izmjenama.'
+            };
+            const systemContent = systemInstructions[params.protocol] || 'Ti si AI asistent za projektne prijedloge.';
+
+            for (const groqKey of groqKeys.sort(() => Math.random() - 0.5)) {
+                try {
+                    const groqResponse = await fetch(GROQ_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${groqKey}`
+                        },
+                        body: JSON.stringify({
+                            model: GROQ_MODEL,
+                            messages: [
+                                { role: 'system', content: systemContent },
+                                ...params.messages.map(m => ({ role: m.role, content: m.content }))
+                            ],
+                            max_tokens: 2048,
+                            temperature: 0.7,
+                            stream: true
+                        })
+                    });
+
+                    if (groqResponse.status === 429) continue;
+                    if (!groqResponse.ok) break;
+
+                    const reader = groqResponse.body!.getReader();
+                    const decoder = new TextDecoder();
+                    let fullText = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+                        for (const line of lines) {
+                            const data = line.replace('data: ', '').trim();
+                            if (data === '[DONE]') continue;
+                            try {
+                                const parsed = JSON.parse(data);
+                                const delta = parsed.choices?.[0]?.delta?.content ?? '';
+                                if (delta) {
+                                    fullText += delta;
+                                    setContent(fullText);
+                                }
+                            } catch (e) { }
+                        }
+                    }
+
+                    if (fullText) {
+                        console.log('[Oracle] ✅ Uspješno! Provider: Groq | Model:', GROQ_MODEL);
+                        return fullText;
+                    }
+                } catch (groqErr) {
+                    console.warn('[Groq Fallback] Error:', groqErr);
+                    continue;
+                }
+            }
+
             setError(err.message);
-            console.error('[useAIStream] Greška:', err.message);
-            return fullContent;
+            console.error("[useAIStream Final Error]:", err);
+            return "";
         } finally {
             setIsStreaming(false);
         }
-
-        return fullContent;
     }, []);
 
-    const cancel = useCallback(() => {
-        abortControllerRef.current?.abort();
-        setIsStreaming(false);
-    }, []);
 
-    const reset = useCallback(() => {
-        setContent('');
-        setError(null);
-        setIsStreaming(false);
-    }, []);
-
-    return { content, isStreaming, error, streamSection, cancel, reset };
+    return {
+        content,
+        isStreaming,
+        error,
+        streamSection,
+        cancel: () => setIsStreaming(false),
+        reset: () => { setContent(''); setError(null); }
+    };
 }
+

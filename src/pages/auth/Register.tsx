@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Waves, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ParticleBackground from "@/components/auth/ParticleBackground";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Register() {
@@ -68,12 +68,16 @@ export default function Register() {
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring" }}
-            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 glow-border mb-4"
+            className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/5 glow-border mb-4 overflow-hidden border border-white/10 p-2"
           >
-            <Waves className="h-8 w-8 text-primary" />
+            <img
+              src="https://i.postimg.cc/Z5PkMvVq/KVS-SCUBA-LOGO.png"
+              alt="ECO SCUBA Logo"
+              className="w-full h-full object-contain"
+            />
           </motion.div>
-          <h1 className="font-display text-3xl font-bold text-foreground">ECO SCUBA</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kreirajte svoj račun</p>
+          <h1 className="font-display text-4xl font-bold text-text-primary tracking-tight">ECO SCUBA</h1>
+          <p className="text-sm text-text-muted mt-2 font-medium">Kreirajte svoj račun</p>
         </div>
 
         <div className="glass rounded-2xl border border-border p-8 shadow-lg">

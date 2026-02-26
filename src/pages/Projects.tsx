@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProjectCard from "@/components/dashboard/ProjectCard";
 import NewProjectWizard from "@/components/projects/NewProjectWizard";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
