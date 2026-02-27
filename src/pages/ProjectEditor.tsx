@@ -83,6 +83,21 @@ export default function ProjectEditor() {
             if (sError) throw sError;
             setSections((sectionsData || []) as any);
 
+            // AUTO-FIX: Reset stuck 'generating' sections to 'pending'
+            const stuckSections = sectionsData?.filter(s => s.status === 'generating') || [];
+            if (stuckSections.length > 0) {
+                console.log(`[APA-Fix] Pronađeno ${stuckSections.length} zaglavljenih sekcija. Resetujem na 'pending'...`);
+                for (const section of stuckSections) {
+                    await supabase
+                        .from('project_sections')
+                        .update({ status: 'pending' } as any)
+                        .eq('id', section.id);
+                }
+                // Update local state as well
+                setSections(prev => prev.map(s => s.status === 'generating' ? { ...s, status: 'pending' } : s));
+                toast.info("Pronađene su zaglavljene sekcije iz prethodne sesije. Status je resetovan na 'pending'.");
+            }
+
             const { data: collabData } = await supabase
                 .from('project_collaborators')
                 .select('*, profiles(*)')

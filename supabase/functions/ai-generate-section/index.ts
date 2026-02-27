@@ -506,81 +506,6 @@ SEKCIJA 4 — ETIČKA ZAŠTITA
 ================================================================================
 `;
 
-async function* generateWithGemini(keys: string[], messages: any[], systemPrompt: string) {
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i].trim();
-    if (!key) continue;
-
-    try {
-      console.log(`[Gemini] Attempting with key index ${i} via REST Stream`);
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: messages.map((m: any) => ({
-              role: m.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: m.content }]
-            })),
-            systemInstruction: {
-              parts: [{ text: systemPrompt }]
-            },
-            generationConfig: {
-              maxOutputTokens: 4096,
-            }
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`[Gemini] Key ${i} failed: ${response.status}`, errText.substring(0, 100));
-        if (response.status === 429) continue;
-        if (i === keys.length - 1) throw new Error(`Gemini API Error: ${response.status}`);
-        continue;
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("ReadableStream not available");
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const cleanedLine = line.slice(6).trim();
-              if (!cleanedLine) continue;
-
-              const data = JSON.parse(cleanedLine);
-              const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) {
-                yield { text: () => text };
-              }
-            } catch (e) {
-              // Valid SSE might have heartbeats or partial JSON
-            }
-          }
-        }
-      }
-      return; // Success, end the generator
-    } catch (err: any) {
-      console.error(`[Gemini] Error with key index ${i}:`, err.message);
-      if (i === keys.length - 1) throw err;
-    }
-  }
-  throw new Error("All Gemini keys exhausted.");
-}
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: corsHeaders });
@@ -657,38 +582,63 @@ ${protocol === 'RIP' || protocol === 'RIP_FAZA_0'
     const encoder = new TextEncoder();
 
     // Strategy: Try Gemini first, then fall back to Anthropic
+    // Gemini REST fallback (identičan pattern kao process-form-upload)
     if (geminiKeys.length > 0) {
-      try {
-        const shuffledKeys = [...geminiKeys].sort(() => Math.random() - 0.5);
-        const geminiStream = await generateWithGemini(shuffledKeys, allMessages, systemInstruction);
-        const readable = new ReadableStream({
-          async start(controller) {
-            try {
-              for await (const chunk of geminiStream) {
-                const text = chunk.text();
-                fullContent += text;
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text })}\n\n`));
-              }
-
-              if (!isPreview) {
-                await supabaseAdmin.from('ai_conversations').insert({
-                  project_id, protocol,
-                  messages: [...allMessages, { role: 'assistant', content: fullContent }],
-                  token_count: fullContent.length,
-                });
-              }
-
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: fullContent })}\n\n`));
-              controller.close();
-            } catch (e: any) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: e.message })}\n\n`));
-              controller.close();
+      const shuffledKeys = [...geminiKeys].sort(() => Math.random() - 0.5);
+      for (let i = 0; i < shuffledKeys.length; i++) {
+        const apiKey = shuffledKeys[i];
+        console.log(`[Gemini] Attempting with key index ${i} via REST Stream`);
+        try {
+          const geminiResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: allMessages.map(m => ({ text: `${m.role}: ${m.content}` })) }],
+                generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
+              })
             }
+          );
+
+          if (geminiResp.status === 429 || geminiResp.status === 403) {
+            const errText = await geminiResp.text();
+            console.warn(`[Gemini] Key ${i} failed: ${geminiResp.status} ${errText.substring(0, 80)}`);
+            continue;
           }
-        });
-        return new Response(readable, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
-      } catch (geminiErr) {
-        console.warn('Gemini failed, trying Groq...', geminiErr);
+
+          if (!geminiResp.ok) {
+            console.warn(`[Gemini] Key ${i} HTTP error: ${geminiResp.status}`);
+            break;
+          }
+
+          const geminiData = await geminiResp.json();
+          const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+          
+          if (text) {
+            console.log(`[Gemini] ✅ Success with key ${i}`);
+
+            if (!isPreview) {
+              await supabaseAdmin.from('ai_conversations').insert({
+                project_id, protocol,
+                messages: [...allMessages, { role: 'assistant', content: text }],
+                token_count: text.length,
+              });
+            }
+
+            const stream = new ReadableStream({
+              start(controller) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text })}\n\n`));
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: text })}\n\n`));
+                controller.close();
+              }
+            });
+            return new Response(stream, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
+          }
+        } catch (err: any) {
+          console.warn(`[Gemini] Key ${i} exception:`, err.message?.substring(0, 80));
+          continue;
+        }
       }
     }
 

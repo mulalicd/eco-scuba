@@ -1,5 +1,5 @@
 // src/hooks/useAIStream.ts
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 // import { APA_SYSTEM_PROMPT } from '@/lib/apa-system-prompt'; // Uklonjeno iz runtime-a radi uštede tokena (Fix #1)
 
@@ -26,8 +26,21 @@ export function useAIStream() {
     const [content, setContent] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const streamSection = useCallback(async (params: StreamParams): Promise<string> => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
+        const timeoutId = setTimeout(() => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+                console.warn('[Stream] Timeout nakon 30s — sekcija:', params.section_key);
+            }
+        }, 30000);
+
         setIsStreaming(true);
         setContent('');
         setError(null);
@@ -52,7 +65,8 @@ export function useAIStream() {
                     protocol: params.protocol,
                     messages: params.messages,
                     project_context: params.project_context
-                })
+                }),
+                signal: abortControllerRef.current.signal
             });
 
             if (!response.ok) {
@@ -126,7 +140,8 @@ export function useAIStream() {
                             max_tokens: 2048,
                             temperature: 0.7,
                             stream: true
-                        })
+                        }),
+                        signal: abortControllerRef.current?.signal
                     });
 
                     if (groqResponse.status === 429) continue;
@@ -159,7 +174,11 @@ export function useAIStream() {
                         console.log('[Oracle] ✅ Uspješno! Provider: Groq | Model:', GROQ_MODEL);
                         return fullText;
                     }
-                } catch (groqErr) {
+                } catch (groqErr: any) {
+                    if (groqErr.name === 'AbortError') {
+                        console.warn('[Groq Fallback] Request aborted due to timeout or user cancellation.');
+                        return fullContent; // Return current content if aborted
+                    }
                     console.warn('[Groq Fallback] Error:', groqErr);
                     continue;
                 }
@@ -169,7 +188,9 @@ export function useAIStream() {
             console.error("[useAIStream Final Error]:", err);
             return "";
         } finally {
+            clearTimeout(timeoutId);
             setIsStreaming(false);
+            abortControllerRef.current = null; // Clean up the AbortController
         }
     }, []);
 
