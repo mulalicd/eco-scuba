@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, FolderOpen, BarChart2, Users, Settings, LogOut } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 

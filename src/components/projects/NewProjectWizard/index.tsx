@@ -9,7 +9,7 @@ import Step2Basics from "./Step2Basics";
 import Step3APAData from "./Step3APAData";
 import Step4Review from "./Step4Review";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Props {
@@ -57,15 +57,12 @@ export default function NewProjectWizard({ open, onOpenChange }: Props) {
                 donor_name: finalData.donor_name || null,
                 owner_id: user.id,
                 status: 'in_progress',
-                public_call_analysis: finalData.public_call_analysis || {},
                 form_template_analysis: finalData.extractedData || {},
-                apa_collected_data: finalData
+                apa_collected_data: finalData,
+                priority_area: finalData.priority_area || null,
+                project_language: finalData.project_language || 'bs',
             };
 
-            // Safety mapping for language column
-            if (finalData.project_language) {
-                projectInsert.project_language = finalData.project_language;
-            }
 
             const { data: project, error: pError } = await supabase
                 .from('projects')

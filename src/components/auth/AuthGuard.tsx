@@ -1,7 +1,7 @@
 // src/components/auth/AuthGuard.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {

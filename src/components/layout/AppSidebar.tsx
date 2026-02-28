@@ -12,7 +12,7 @@ import {
   Waves,
 } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 
 const navItems = [

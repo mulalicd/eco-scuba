@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store/uiStore";
 import { useProjectStore } from "@/store/projectStore";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Project, ProjectSection, ChangeLogEntry, Profile } from "@/types";
 import { SectionNavigator } from "@/components/editor/SectionNavigator";
 import SectionCard from "@/components/editor/SectionCard";
@@ -94,7 +94,8 @@ export default function ProjectEditor() {
                         .eq('id', section.id);
                 }
                 // Update local state as well
-                setSections(prev => prev.map(s => s.status === 'generating' ? { ...s, status: 'pending' } : s));
+                const resetSections = (sectionsData || []).map((s: any) => s.status === 'generating' ? { ...s, status: 'pending' } : s) as any;
+                setSections(resetSections);
                 toast.info("Pronađene su zaglavljene sekcije iz prethodne sesije. Status je resetovan na 'pending'.");
             }
 
