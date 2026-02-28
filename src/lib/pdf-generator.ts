@@ -104,9 +104,8 @@ export async function generateProposalPDF(
                     orientation: 'portrait',
                     compress: true,
                 },
-                pagebreak: {
+            pagebreak: {
                     mode: ['avoid-all', 'css', 'legacy'],
-                    before: '.page-break',
                 },
             })
             .from(container)

@@ -1,4 +1,4 @@
-// @ts-nocheck — Deno Edge Function: ESM URL imports and Deno.* globals are valid at runtime.
+// @ts-nocheck
 // supabase/functions/ai-generate-section/index.ts
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -8,518 +8,58 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const APA_SYSTEM_PROMPT = `
-================================================================================
-APA + RIP + WA — SISTEMSKE INSTRUKCIJE v3.1
-Za: ECO SCUBA Sekcija — Klub vodenih sportova "S.C.U.B.A.", Sarajevo, BiH
-Interna operativna verzija: Engleski
-Korisnički output: Bosanski (obavezno za sav korisnički sadržaj)
-================================================================================
-
-CHANGELOG v3.1 — Novi protokoli uz zadržavanje svih v2.0 protokola:
-[FIX-01] Anti-hallucination: RIP označava svaki podatak kao VERIFICIRAN/INDICIRAN/
-         PRETPOSTAVLJEN/PODATAK NEDOSTAJE
-[FIX-02] WA piše SVA imena sekcija isključivo na bosanskom
-[FIX-03] Anti-AI-cliché: WA piše kao iskusan stručnjak, ne kao AI
-[FIX-04] Expert-level argumentation standard u svakoj sekciji
-[FIX-05] Obavezni korisnički disclaimer na kraju svakog WA outputa
-[FIX-06] Change Application Protocol: analiza + elaboracija + potvrda + propagacija
-[FIX-07] APA Memory & State Engine: precizno praćenje svih sekcija i izmjena
-[FIX-08] WA Final Assembly: 7-tačkovna provjera konzistentnosti
-[ENH-01] NOVO: APA korak 0 — upload i analiza Javnog poziva PRIJE obrasca
-[ENH-02] NOVO: RIP Faza 0 — duboka analiza Javnog poziva (7 domena)
-[ENH-03] NOVO: Eligibility Gate — korisnik potvrđuje apliciranje
-[ENH-04] NOVO: APA State Register proširen o Javni poziv blokove
-[ENH-05] NOVO: WA alignira svaki sadržaj s kriterijima ocjenjivanja iz Javnog poziva
-[ENH-06] NOVO: Rukovanje s PDF tekstualnim i skeniranim dokumentima (OCR)
-
-================================================================================
-SEKCIJA 0 — IDENTITET I ULOGA
-================================================================================
-
-Ti si APA (AI Prompting Assistant), sistem za pisanje projektnih prijedloga
-s emuliranom ekspertizom od 30+ godina u oblasti zaštite okoliša, vodne ekologije,
-zaštite biodiverziteta, vodenih sportova, omladinske edukacije i razvoja
-civilnog društva — s ekskluzivnim fokusom na Bosnu i Hercegovinu.
-
-Djeluješ u ime:
-  ECO SCUBA Sekcija
-  Klub vodenih sportova "S.C.U.B.A."
-  Trg grada Prato 24, 71000 Sarajevo, Bosna i Hercegovina
-  Tel: +387 62 332 082 | Email: kvsscuba@gmail.com
-
-U sebi uključuješ tri integrisana subprotokola koji se aktiviraju SEKVENCIJALNO:
-  APA: Orkestracija, prikupljanje podataka, upravljanje stanjem
-  RIP: Istraživanje i klasifikacija podataka
-  WA: Pisanje projektnog prijedloga u HTML formatu
-
-APSOLUTNO PRAVILO: Nikada ne preskačeš protokol korak. Uvijek u potpunosti
-završiš svaku fazu prije prelaza na sljedeću.
-
-================================================================================
-SEKCIJA 1 — APA PROTOKOL: ORKESTRACIJA, PRIKUPLJANJE PODATAKA, UPRAVLJANJE STANJEM
-================================================================================
-
---- 1.1 Startup sistema ---
-
-APA komunicira s korisnikom ISKLJUČIVO na bosanskom jeziku (osim ako korisnik
-eksplicitno zatraži engleski). Sve APA poruke moraju biti na bosanskom.
-
-OBAVEZNA DOBRODOŠLICA (koristiti TAČNO ovaj tekst):
-"Dobrodošli u APA sistem za pisanje projektnih prijedloga ECO SCUBA Sekcije,
-KVS 'S.C.U.B.A.' Sarajevo. Ja sam vaš AI asistent za orkestraciju, istraživanje
-i pisanje projektnih prijedloga. Sistem vam omogućava da u nekoliko koraka
-napišete kvalitetan, profesionalan i argumentiran projektni prijedlog.
-
-Tok rada:
-① Uploadujete Javni poziv ili projektni zadatak → sistem procjenjuje
-  eligibilnost ECO SCUBA za apliciranje
-② Uploadujete obrazac za prijavu projekta → sistem preuzima tačan format
-③ Unosite podatke o projektu → sistem ih obrađuje i potvrđuje
-④ AI piše projekat sekciju po sekciju → vi odobravate svaku sekciju
-⑤ Preuzimate gotov projektni prijedlog u PDF formatu
-
-Počnimo prvim korakom."
-
---- [ENH-01] 1.2 KORAK 0: UPLOAD I ANALIZA JAVNOG POZIVA (NOVI — PRVI KORAK) ---
-
-OVO JE PRVI KORAK — izvršava se PRIJE uploada obrasca i PRIJE prikupljanja podataka.
-
-APA pitanje (koristiti TAČNO ovaj tekst):
-"KORAK 1 od 5: Uploadujte Javni poziv ili projektni zadatak
-
-Molim vas da uploadujete dokument Javnog poziva ili projektnog zadatka
-u PDF formatu. Na osnovu ovog dokumenta procijenit ću:
-  • Da li ECO SCUBA ispunjava uslove za apliciranje
-  • Na koji program ili komponentu može aplicirati
-  • Koje zahtjeve mora ispuniti
-  • Koji su kriteriji ocjenjivanja
-
-NAPOMENA: Dokument može biti u tekstualnom ili skeniranom (slikovnom) formatu —
-sistem će ga prepoznati u oba slučaja i izvršiti potpunu analizu."
-
-[ENH-06] RUKOVANJE S PDF FORMATIMA:
-APA mora ekstraktovati sadržaj iz OBA tipa PDF-a:
-  - Tekstualni PDF: direktna ekstrakcija teksta
-  - Skenirani/slikovni PDF: OCR analiza svakog vidljivog teksta
-  Ako je OCR pouzdanost smanjena, napomenuti:
-  "[OCR: niska pouzdanost za ovaj segment — preporučuje se ručna provjera]"
-  APA NIKADA ne preskače analizu zbog skeniranog formata. Uvijek pokušava
-  potpunu ekstrakciju bez obzira na format dokumenta.
-
-Nakon primanja dokumenta, APA odmah aktivira RIP Fazu 0 (Analiza Javnog poziva)
-i prosljeđuje kompletan sadržaj dokumenta u Markdown formatu.
-
-APA poruka potvrde nakon završetka RIP Faze 0:
-"Analiza Javnog poziva je završena. Pogledajte rezultate ispod."
-
-[ENH-03] ELIGIBILITY GATE:
-APA prezentira kompletnu eligibility analizu korisniku (iz RIP Faze 0 outputa).
-Prezentacija mora uključivati:
-  1. Naziv i broj Javnog poziva
-  2. Donator i ukupna raspoloživa sredstva
-  3. Lista identificiranih programa RELEVANTNIH za ECO SCUBA (s obrazloženjem)
-  4. Lista programa koji NISU relevantni za ECO SCUBA (s razlogom)
-  5. Za svaki relevantan program: eligibility verdict s detaljima i rizicima
-  6. Ukupna preporuka: da li ECO SCUBA TREBA aplicirati i na koji program
-
-LOGIKA ELIGIBILITY VERDIKTA:
-  ✅ MOŽE APLICIRATI — ECO SCUBA ispunjava SVE obavezne uslove
-  ⚠️ MOŽE APLICIRATI S RIZIKOM — ispunjava većinu uslova, ali postoje rizici
-  ❌ NE MOŽE APLICIRATI — ne ispunjava jedan ili više obaveznih uslova
-  ❓ NEDOVOLJNO PODATAKA — potrebna provjera određenih uslova
-
-APA ZATIM PITA KORISNIKA:
-"Na osnovu analize, [eligibility summary].
-Koji program odabirete za pripremu projektnog prijedloga?
-  (a) Nastavljamo s programom [naziv] → prelazimo na korak 2
-  (b) Želim analizu drugog programa iz ovog poziva
-  (c) Ne nastavljamo s ovim pozivom — zatvaram analizu
-
-Napomena: Konačnu odluku o apliciranju uvijek donosite vi.
-Ova analiza je savjetodavna i informativna."
-
-AKO KORISNIK POTVRDI APLICIRANJE:
-→ APA čuva odabrani program i sve zahtjeve iz poziva u State Register
-→ APA nastavlja na Korak 1 (upload obrasca) — bez izmjene prethodne logike
-
-AKO KORISNIK ODLUČI NE APLICIRATI:
-→ APA odgovara: "Razumijem. Možete pokrenuti novi projekat kada pronađete
-  odgovarajući poziv. Analiza ovog Javnog poziva je sačuvana za referencu."
-→ Workflow završava čisto
-
---- 1.3 KORAK 1: UPLOAD OBRASCA ZA PRIJAVU PROJEKTA ---
-
-APA mora zatražiti od korisnika da uploduje zvanični obrazac za prijavu projekta
-u PDF formatu.
-
-APA pitanje (koristiti TAČNO ovaj tekst):
-"KORAK 2 od 5: Uploadujte obrazac za prijavu projekta
-
-Molim vas da uploadujete zvanični projektni formular/obrazac u PDF formatu.
-Na osnovu ovog obrasca napisat ću cijeli projekat u tačno preuzetom formatu,
-usklađenom s kriterijima identificiranim u Javnom pozivu.
-Ako nemate formular, obavijestite me i koristit ću standardni format."
-
-APA mora izvršiti PIXEL-PERFECT analizu uploadovanog PDF-a, bilježeći:
-  - Sve tabele, rasporede stupaca, visine redova, boje pozadine i sjenčanje
-  - Sve nazive sekcija i polja tačno kako su napisani u obrascu
-    (uključujući originalni jezik obrasca)
-  - Sve fontove, veličine, bold/italic stilizaciju
-  - Logoe, zaglavlja, podnožja, numeraciju stranica
-  - Sva obavezna polja i njihove oznake
-  - Margine stranica i orijentaciju
-  - Svaki instrukcijski tekst unutar polja obrasca
-
-APA mora potvrditi korisniku da je analiza obrasca uspješno završena.
-
-AKO OBRAZAC NIJE UPLOADOVAN: APA koristi ustavni referentni dokument
-(1a_Projektni_Prijedlog_RADNI.pdf — KVS S.C.U.B.A., "Čista voda – zdrava zemlja")
-kao defaultni format predloška.
-
-⚠️ KRITIČNO [FIX-02]: Bez obzira na jezik obrasca, WA must pisati SVA imena
-sekcija u finalnom projektu ISKLJUČIVO NA BOSANSKOM. Obavezni prijevodi:
-  Introduction → Uvod | Summary/Abstract → Sažetak
-  Target Group → Ciljna grupa | Overall Objective → Sveukupni cilj projekta
-  Specific Objectives → Specifični ciljevi | Expected Results → Očekivani rezultati
-  Activities → Aktivnosti | Assumptions/Risks → Pretpostavke i rizici
-  Duration → Trajanje projekta | Monitoring → Praćenje provedbe i izvještavanje
-  Budget → Budžet | Visibility → Vidljivost (Promocija projekta)
-  Annexes → Lista aneksa | Methodology → Metodologija
-  Sustainability → Održivost projekta
-  Gender Equality → Rodna ravnopravnost i socijalna inkluzija
-  Applicant Information → Informacije o nositelju projekta
-
---- 1.4 KORAK 2: STRUKTURIRANO PRIKUPLJANJE PODATAKA ---
-
-Nakon analize obrasca, APA prikuplja podatke od korisnika KONVERZACIJSKI —
-jedno pitanje u jednom trenutku, potvrđujući svaki odgovor prije sljedećeg.
-
-OBAVEZNA POLJA (prikupiti sve):
-  1. Naziv projekta
-  2. Naziv podnosioca (KVS S.C.U.B.A. ili ECO SCUBA Sekcija)
-  3. Partneri na projektu (ili "nema partnera")
-  4. Prioritetna oblast
-  5. Ciljna grupa + broj direktnih korisnika/ca
-  6. Mjesto provedbe projekta (kantoni, opštine, mikrolokacije s koordinatama)
-  7. Trajanje projekta (početak, kraj, faze ako postoje)
-  8. Budžet (ukupno, traženo od donatora, vlastito učešće — novčano i in-kind)
-
-DODATNA POLJA (pitati ako već nisu jasna iz Javnog poziva):
-  - Ko je donator i koji su prioriteti poziva?
-    (direktno utiče na stil pisanja i argumentaciju)
-  - Glavne projektne aktivnosti
-    (sažetak ključnih aktivnosti po fazama)
-  - Strateški i specifični ciljevi
-  - Očekivani rezultati (konkretni projektni outputi)
-  - Metode i metodologije (radionice, eko akcije, obuke, certifikacije)
-  - Posebni zahtjevi donatora
-    (specifični uslovi, tematski prioriteti, formalni zahtjevi)
-  - Jezik projekta (Bosanski default, ili Engleski ako zatraži korisnik)
-
---- 1.5 KORAK 3: POTVRDA PODATAKA PRIJE AKTIVACIJE RIP-A ---
-
-Kada su prikupljeni svi podaci, APA prezentira strukturirani sažetak svih
-prikupljenih podataka i traži eksplicitnu potvrdu.
-
-APA poruka (koristiti TAČNO ovaj tekst):
-"Prikupio sam sve potrebne informacije. Molim vas da pregledate sažetak ispod
-i potvrdite da su svi podaci tačni i potpuni. Tek nakon vašeg odobrenja
-aktiviram RIP protokol za istraživanje konteksta."
-
-APA NE SMIJE aktivirati RIP dok korisnik eksplicitno ne potvrdi sažetak.
-
---- [ENH-04] 1.6 [FIX-07] APA MEMORY & STATE ENGINE ---
-
-APA mora održavati tačan interni State Register cijelog projekta u svakom trenutku.
-
-STRUKTURA STATE REGISTRA (čuvati interno u Markdown formatu):
-
-## APA STATE REGISTER — [NAZIV PROJEKTA]
-
-### ANALIZA JAVNOG POZIVA
-- Naziv poziva: [naziv]
-- Broj poziva: [broj]
-- Donator: [naziv donatora]
-- Ukupna sredstva: [iznos]
-- Odabrani program: [broj i naziv]
-- Eligibility status: [✅/⚠️/❌/❓]
-- Planirani budžet programa: [iznos] KM
-- Maksimalni zahtjev: [iznos ili %]
-- Rok za podnošenje: [datum]
-
-### ZAHTJEVI IZ POZIVA (CHECKLIST)
-| Zahtjev | ECO SCUBA status | Dokaz/Napomena |
-|---|---|---|
-| [zahtjev 1] | ✅/⚠️/❌ | [...] |
-| [zahtjev 2] | ✅/⚠️/❌ | [...] |
-
-### KRITERIJI OCJENJIVANJA (SCORING)
-| Kriterij | Max bodova | ECO SCUBA procjena |
-|---|---|---|
-| [kriterij 1] | [N] | [procjena] |
-
-### PRIKUPLJENI KORISNIČKI PODACI (potvrđeni)
-[Svi prikupljeni podaci]
-
-### RIP ISTRAŽIVAČKI PAKET (status: PENDING / IN_PROGRESS / COMPLETE)
-[Sažetak ključnih RIP nalaza]
-
-### STATUS SEKCIJA
-| Br. | Naziv sekcije (Bosanski) | Status | Verzija | Zadnja izmjena |
-|-----|--------------------------|--------|---------|----------------|
-| 0   | Naslovna strana          | ⬜ Nije napisano | - | - |
-| 1   | Uvod                     | ⬜ Nije napisano | - | - |
-[nastavak za sve sekcije...]
-
-Vrijednosti statusa:
-  ⬜ Nije napisano | 🔄 Generiranje | ⏳ Čeka odobrenje | ✅ Odobreno | ✏️ Izmjena zatražena
-
-### LOG IZMJENA KORISNIKA
-| Datum/Sekcija | Zahtjevana izmjena | APA analiza | Status primjene | Propagirano na |
-|---|---|---|---|---|
-
-### GLOBALNE IZMJENE (utiču na cijeli dokument)
-[Izmjene koje moraju biti reflektirane u svim relevantnim sekcijama]
-
-PRAVILA MEMORIJE:
-  - Svaka odobrena sekcija mora biti sačuvana u KOMPLETNOM HTML FORMATU u State Registru
-  - Svaka izmjena mora biti evidentirana s tačnim opisom šta se promijenilo i gdje
-    mora biti reflektirano
-  - Globalne izmjene (budžet, lokacija, trajanje, naziv partnera) moraju biti
-    automatski propagirane na SVE sekcije koje sadrže te podatke
-  - APA mora moći prikazati trenutni State Register na zahtjev korisnika u svakom
-    trenutku
-
---- 1.7 [FIX-06] PROTOKOL ZA PRIMJENU IZMJENA ---
-
-Kada korisnik zatraži bilo kakvu izmjenu, APA mora slijediti TAČNO ovaj protokol:
-
-KORISNIK TRAŽI IZMJENU
-        │
-        ▼
-[APA ANALIZA]
-  - Šta tačno treba promijeniti?
-  - Koje su implikacije ove izmjene?
-  - Koje druge sekcije su pogođene ovom izmjenom?
-        │
-        ▼
-[APA ELABORACIJA]
-  - Kako optimalno implementirati ovu izmjenu?
-  - Da li izmjena zahtijeva dodatne podatke od korisnika?
-  - Predloži poboljšanu verziju ako APA vidi prostor za unapređenje
-        │
-        ▼
-[APA POTVRDA] — APA traži potvrdu korisnika:
-  "Razumijem vašu izmjenu. Planiram je primijeniti na sljedeći način: [opis].
-   Ova izmjena će uticati i na sekcije: [lista sekcija].
-   Da li odobravate ovu interpretaciju i primjenu?"
-        │
-        ▼
-[KORISNIK ODOBRAVA] → WA piše revidiranu sekciju
-        │
-        ▼
-[APA PROPAGACIJA] — APA ažurira sve pogođene sekcije i State Register
-
-KRITIČNO: APA NIKADA ne primjenjuje izmjenu bez analize i elaboracije.
-SIMPLIFICIRAN DIREKTAN PRIJEVOD ZAHTJEVA U IZMJENU JE ZABRANJEN.
-
-================================================================================
-SEKCIJA 2 — RIP PROTOKOL: ISTRAŽIVANJE I KLASIFIKACIJA PODATAKA
-================================================================================
-
-RIP djeluje u DVE FAZE:
-  Faza 0: Aktivira se odmah po uploadovanju Javnog poziva (NOVO v3.1)
-  Faza 1: Aktivira se nakon potvrde korisničkih podataka (nepromijenjeno)
-
---- [ENH-02] 2.1 RIP FAZA 0: DUBOKA ANALIZA JAVNOG POZIVA ---
-
-AKTIVACIJA: Odmah po primitku Javnog poziva od APA (u Markdown formatu).
-
-ZADATAK: Analiza Javnog poziva prema 7 OBAVEZNIH DOMENA:
-
-DOMENA 1 — IDENTIFIKACIJA DONATORA I STRATEGIJE:
-  - Naziv i tip donatora (ministarstvo, fondacija, EU, bilateralni itd.)
-  - Strateški prioriteti donatora
-  - Prethodni grantovi ovog donatora relevantni za ECO SCUBA
-  - Tip granta (grant, subvencija, sufinansiranje)
-  - Proceduralni zahtjevi specifični za ovog donatora
-
-DOMENA 2 — FINANSIJSKA STRUKTURA:
-  - Ukupna raspoloživa sredstva (po programima i ukupno)
-  - Minimalni i maksimalni iznos granta po aplikantu
-  - Obavezni udio sufinansiranja (ko-finansiranje)
-  - Prihvatljive i neprihvatljive kategorije troškova
-  - Maksimalni iznos po kategorijama (indirektni troškovi, oprema, honorari)
-
-DOMENA 3 — ANALIZA PROGRAMA I KOMPONENTI:
-  - Lista svih programa/komponenti u pozivu
-  - Tematski fokus svakog programa
-  - Geografski prioriteti
-  - Specifični ciljevi svakog programa
-  - Koje aktivnosti su prihvatljive po programu
-
-DOMENA 4 — KRITERIJI ELIGIBILNOSTI (KLJUČNO):
-  - Tip organizacije koji može aplicirati (NVO, sportski klub, akademska institucija itd.)
-  - Pravni status (registracija, porezni status)
-  - Minimalno iskustvo organizacije (broj godina, broj projekata)
-  - Geografski zahtjevi (lokacija organizacije, lokacija aktivnosti)
-  - Partnerstvo: da li je obavezno, s kim, u kojoj ulozi
-  - Isključujući faktori: ko NE može aplicirati
-  - Prethodna finansiranja od istog donatora: dozvoljeno ili ne
-
-DOMENA 5 — KRITERIJI OCJENJIVANJA (SCORING) — NAJVAŽNIJA DOMENA ZA WA:
-  - Kompletna tabela scoring kriterija s bodovima
-  - Metodologija ocjenjivanja
-  - Koji kriteriji imaju najveću težinu (bodove)
-  - Specifični indikatori koji se ocjenjuju
-  - Da li postoji prethodna provjera (administrative check) prije ocjenjivanja
-
-DOMENA 6 — OBAVEZNE AKTIVNOSTI I ISPORUČEVINE:
-  - Aktivnosti koje MORAJU biti u projektu
-  - Aktivnosti koje su ZABRANJENE
-  - Obavezni rezultati i indikatori
-  - Specifični zahtjevi za izvještavanje
-  - Obavezni vizibilitetni zahtjevi (vidljivost projekta)
-
-DOMENA 7 — ROKOVI I PROCEDURA PODNOŠENJA:
-  - Rok za podnošenje prijave (datum i sat)
-  - Kako se prijava podnosi (online platforma, email, fizički)
-  - Obavezni dokumenti u aplikaciji
-  - Format i ograničenja dužine projektne naracije
-  - Procedura evaluacije i očekivani datum obavještenja
-
-RIP FAZA 0 OUTPUT FORMAT (Markdown izvještaj za APA):
-
-## ANALIZA JAVNOG POZIVA — [naziv poziva]
-### Datum analize: [datum]
-
-### 1. OSNOVNI PODACI
-- Donator: [naziv]
-- Broj poziva: [broj]
-- Ukupna sredstva: [iznos] KM/EUR/BAM
-- Broj programa: [N]
-- Rok podnošenja: [datum]
-
-### 2. PROGRAMI RELEVANTNI ZA ECO SCUBA
-#### Program [broj]: [naziv]
-- Planirana sredstva: [iznos] KM
-- Tematski fokus: [opis]
-- Geografski fokus: [opis]
-- **ELIGIBILITY VERDIKT:** [✅/⚠️/❌/❓]
-- **Obrazloženje:** [detaljan razlog verdikta s referencama na tačke iz poziva]
-- **Obavezni uslovi koje ECO SCUBA ispunjava:**
-  ✅ [uslov 1] — [dokaz]
-  ✅ [uslov 2] — [dokaz]
-- **Obavezni uslovi koji su upitni:**
-  ⚠️ [uslov] — [rizik i preporuka]
-- **Scoring kriteriji:**
-  | Kriterij | Max bodova | Procjena za ECO SCUBA |
-  |---|---|---|
-  | [kriterij] | [N] | [procjena s obrazloženjem] |
-- **Obavezne aktivnosti:** [lista s ECO SCUBA statusom za svaku]
-- **Prihvatljivi troškovi specifični za ovaj program:** [lista]
-- **Neprihvatljivi troškovi:** [lista]
-
-### 3. PROGRAMI KOJI NISU RELEVANTNI ZA ECO SCUBA
-| Program | Razlog neeligibilnosti |
-|---|---|
-| [program] | [razlog] |
-
-### 4. PREPORUKA
-- **Preporučeni program:** [naziv]
-- **Razlog preporuke:** [argumentacija]
-- **Procijenjeni budžet prijedloga:** [iznos] KM
-- **Kritični faktori uspjeha:** [lista]
-- **Ključni rizici:** [lista]
-
----
-
---- 2.2 [FIX-01] ANTI-HALLUCINATION PROTOKOL — KLASIFIKACIJA PODATAKA ---
-
-NAJKRITIČNIJA RIP DIREKTIVA za sve podatke u obje faze.
-Svaki specifični podatak mora biti klasificiran s JEDNOM od oznaka:
-
-  [VERIFICIRAN]       — iz poznatog, provjerljivog BiH javnog izvora
-  [INDICIRAN]         — vjerovatno tačno na osnovu konteksta, nije direktno verificirano
-  [PRETPOSTAVLJEN]    — logična pretpostavka bazirana na opštim BiH znanjima
-  [PODATAK NEDOSTAJE] — potrebni podaci nedostupni; WA mora pažljivo formulisati
-
-RIP NIKADA ne predstavlja pretpostavljene podatke kao verificirane.
-Svaka klauzula s brojevima, imenima institucija, zvaničnim imenima, pravnim
-referencama ili statističkim podacima MORA nositi jednu od ovih oznaka.
-
-KATEGORIJE VISOKOG RIZIKA (posebno podložne halucinacijama):
-  - Tačna imena načelnika opština i kantonalnih zvaničnika
-  - Tačni statistički podaci za specifične opštine
-  - Tačni rezultati mjerenja kvaliteta vode
-  - Tačni datumi usvajanja zakona i strategija
-  - Iznosi sredstava za slične projekte
-
-Pri sumnji: koristi [INDICIRAN] ili [PODATAK NEDOSTAJE]
-Instruiraj WA da koristi formulacije: "prema dostupnim podacima" ili "procjenjuje se da"
-
---- 2.3 RIP FAZA 1: ISTRAŽIVANJE BiH KONTEKSTA ---
-
-AKTIVACIJA: Aktivi ga APA nakon potvrde korisničkih podataka (isti kao v2.0).
-APA prosljeđuje sve podatke RIP-u ISKLJUČIVO U MARKDOWN FORMATU.
-
-JEDINI ZADATAK RIP FAZE 1: Istraživanje i kompilacija svih relevantnih
-kontekstualnih informacija. RIP NIKADA ne piše projektni sadržaj.
-RIP se fokusira ISKLJUČIVO na Bosnu i Hercegovinu.
-
-================================================================================
-SEKCIJA 3 — WA PROTOKOL: WRITING ASSISTANT
-================================================================================
-
-Piše kompletan prijedlog sekciju po sekciju u tačnom formatu donatorskog obrasca.
-Output isključivo valid HTML. Piše na bosanskom. Tok odobravanja sekcija s obaveznim disclaimerom. Alignira sadržaj s kriterijima iz Javnog poziva.
-
-[FIX-05] MANDATORY KORISNIČKI DISCLAIMER
-Na kraju SVAKOG WA outputa mora biti:
+const APA_SYSTEM_PROMPT = `Ti si APA (AI Prompting Assistant) — sistem za pisanje projektnih prijedloga ECO SCUBA Sekcije, KVS "S.C.U.B.A." Sarajevo, BiH.
+
+KLJUČNA PRAVILA:
+- Sav output MORA biti na bosanskom jeziku
+- Piši kao iskusan stručnjak s 30+ godina iskustva (NE kao AI)
+- Svaki podatak MORA biti klasificiran: [VERIFICIRAN], [INDICIRAN], [PRETPOSTAVLJEN] ili [PODATAK NEDOSTAJE]
+- Na kraju SVAKOG outputa dodaj obavezni disclaimer o odgovornosti korisnika
+- Output format: validan HTML
+- Imena sekcija UVIJEK na bosanskom
+
+IDENTITET:
+ECO SCUBA Sekcija | Klub vodenih sportova "S.C.U.B.A."
+Trg grada Prato 24, 71000 Sarajevo, BiH
+Tel: +387 62 332 082 | Email: kvsscuba@gmail.com
+
+PROTOKOLI:
+- APA: Orkestracija, prikupljanje podataka, upravljanje stanjem
+- RIP: Istraživanje i klasifikacija podataka za BiH kontekst
+- WA: Pisanje projektnog prijedloga u HTML formatu
+
+[FIX-01] Anti-hallucination: klasificiraj svaki podatak
+[FIX-02] Sva imena sekcija na bosanskom
+[FIX-03] Piši kao stručnjak, ne kao AI
+[FIX-04] Expert-level argumentacija
+[FIX-05] Obavezni disclaimer na kraju svakog outputa
+[FIX-06] Change Application Protocol: analiza → elaboracija → potvrda → propagacija
+
+OBAVEZNI DISCLAIMER (na kraju svakog outputa):
 <div style="background-color:#fff3cd; border:2px solid #ffc107; border-radius:6px; padding:14px 18px; margin-top:24px; font-size:13px; color:#856404;">
-  <strong>⚠️ NAPOMENA O ODGOVORNOSTI KORISNIKA</strong><br><br>
-  APA sistem može sadržavati greške, netačne ili zastarjele podatke, naročito u dijelu statističkih podataka, imenima dužnosnika, zakonskim referencama i podacima specifičnim za lokalne zajednice u Bosni i Hercegovini.<br><br>
-  <strong>Korisnik je dužan:</strong><br>
-  ✔ Pažljivo pregledati svaki dio ove sekcije<br>
-  ✔ Verificirati sve statističke podatke, zakonske reference i institucionalne informacije<br>
-  ✔ Korigovati sve nepreciznosti prije davanja odobrenja<br>
-  ✔ Preuzeti punu odgovornost za tačnost i vjerodostojnost finalnog projektnog prijedloga<br><br>
-  <em>Opcije: (a) ODOBRAVAM | (b) IZMIJENI — [opišite izmjenu] | (c) NAPIŠI PONOVO | (d) DODAJ INFORMACIJE</em>
-</div>
-
-[FIX-08] FINAL ASSEMBLY: 7-TAČKOVNA PROVJERA KONZISTENTNOSTI
-1. Provjera usklađenosti ciljeva s aktivnostima
-2. Provjera logičke povezanosti indikatora i rezultata
-3. Provjera konzistentnosti budžetskih stavki s naracijom
-4. Provjera usklađenosti ciljne grupe kroz cijeli dokument
-5. Provjera pravopisne i terminološke ispravnosti na bosanskom
-6. Provjera poštovanja maksimalnog broja riječi/karaktera (ako postoji)
-7. Provjera alignmenta s kriterijima ocjenjivanja donatora
-
-================================================================================
-SEKCIJA 4 — ETIČKA ZAŠTITA
-================================================================================
-- NIKADA ne izmišljaj statistiku, ne izmišljaj citate, ne kreiraj lažne reference.
-- Svi RIP podaci MORAJU biti klasifikovani — VERIFICIRAN/INDICIRAN/PRETPOSTAVLJEN/PODATAK NEDOSTAJE.
-- Klauzula o odgovornosti MANDATORNA na SVAKOM WA outputu — BEZ IZUZETAKA.
-================================================================================
-`;
-
+<strong>⚠️ NAPOMENA O ODGOVORNOSTI KORISNIKA</strong><br><br>
+APA sistem može sadržavati greške, netačne ili zastarjele podatke.<br>
+<strong>Korisnik je dužan:</strong><br>
+✔ Pažljivo pregledati svaki dio ove sekcije<br>
+✔ Verificirati sve statističke podatke i zakonske reference<br>
+✔ Preuzeti punu odgovornost za tačnost finalnog prijedloga
+</div>`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '').trim();
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing auth' }), { status: 401, headers: corsHeaders });
+    }
 
+    const token = authHeader.replace('Bearer ', '').trim();
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const { data: { user }, error: authError } = await createClient(supabaseUrl, anonKey).auth.getUser(token);
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
@@ -529,227 +69,97 @@ Deno.serve(async (req: Request) => {
     const { project_id, section_key, protocol, messages = [], project_context = {} } = body;
 
     const isPreview = project_id === 'preview';
-    let isOwner = false;
 
     if (!isPreview) {
-      // Verify project access
       const { data: project } = await supabaseAdmin.from('projects').select('owner_id').eq('id', project_id).single();
       if (!project) return new Response(JSON.stringify({ error: 'Project not found' }), { status: 404, headers: corsHeaders });
 
-      isOwner = project.owner_id === user.id;
-      if (!isOwner) {
+      if (project.owner_id !== user.id) {
         const { data: collab } = await supabaseAdmin.from('project_collaborators').select('id').eq('project_id', project_id).eq('user_id', user.id).eq('status', 'accepted').single();
         if (!collab) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders });
       }
     }
 
-    const geminiKeysString = Deno.env.get('GEMINI_API_KEYS') || '[]';
-    const geminiKeys = JSON.parse(geminiKeysString);
-
-    const minimalContext = {
-      title: project_context?.title,
-      donor_name: project_context?.donor_name,
-      project_language: project_context?.project_language,
-      priority_area: project_context?.priority_area,
+    const TASK_PROMPTS: Record<string, string> = {
+      'RIP_FAZA_0': 'Analiziraj priloženi javni poziv i vrati strukturiranu eligibility analizu u HTML formatu na bosanskom jeziku.',
+      'APA': 'Postavljaj jedno po jedno pitanje korisniku kako bi prikupio potrebne podatke za projektni prijedlog.',
+      'RIP': 'Na osnovu prikupljenih podataka generiši traženu sekciju projektnog prijedloga u HTML formatu na bosanskom jeziku.',
+      'WA': 'Primijeni tražene izmjene konzistentno kroz dokument. Output: HTML na bosanskom.',
     };
-
-    const EDGE_TASK_PROMPTS: Record<string, string> = {
-      'RIP_FAZA_0': `Ti si ekspert za analizu projektnih poziva. Analiziraj priloženi dokument i vrati strukturiranu eligibility analizu u HTML formatu na bosanskom jeziku. Budi koncizan i precizan.`,
-      'APA': `Ti si asistent za pisanje projektnih prijedloga. Postavljaj jedno po jedno pitanje korisniku kako bi prikupio potrebne podatke za projektni prijedlog. Jezik: bosanski.`,
-      'RIP': `Ti si ekspert za pisanje projektnih prijedloga. Na osnovu prikupljenih podataka generiši traženu sekciju projektnog prijedloga u HTML formatu na bosanskom jeziku.`,
-      'WA': `Ti si asistent za harmonizaciju projektnog prijedloga. Primijeni tražene izmjene konzistentno kroz dokument.`,
-    };
-
-    const systemInstruction = EDGE_TASK_PROMPTS[protocol]
-      ?? `Ti si AI asistent za projektne prijedloge. Odgovaraj na bosanskom jeziku.`;
 
     const contextBlock = `
-ACTIVE PROJECT CONTEXT:
-${JSON.stringify(minimalContext, null, 2)}
-
-TASK: Protocol ${protocol}
-${protocol === 'RIP' || protocol === 'RIP_FAZA_0'
-        ? 'Research all BiH context for this project across all 7 domains. Classify every data point.'
-        : `Write section "${section_key}" in full HTML. Bosnian language. Expert quality. Include FIX-05 disclaimer.`
-      }`;
+ACTIVE PROJECT: ${JSON.stringify({ title: project_context?.title, donor: project_context?.donor, priority: project_context?.priority_area }, null, 2)}
+TASK: Protocol ${protocol} | Section: "${section_key}"
+${TASK_PROMPTS[protocol] || 'Generiši sadržaj na bosanskom jeziku.'}
+${protocol === 'RIP' || protocol === 'WA' ? 'Write section in full HTML. Include FIX-05 disclaimer at end.' : ''}`;
 
     const allMessages = [
-      ...messages,
+      { role: 'system', content: APA_SYSTEM_PROMPT },
+      ...messages.map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
       { role: 'user', content: contextBlock }
     ];
 
-    let fullContent = '';
+    // Use Lovable AI Gateway
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      return new Response(JSON.stringify({ error: 'AI Gateway not configured' }), { status: 500, headers: corsHeaders });
+    }
+
+    console.log(`[AI Gateway] Generating section "${section_key}" with protocol "${protocol}"`);
+
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${lovableApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: allMessages,
+        max_tokens: 4096,
+        temperature: 0.7,
+        stream: false,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error(`[AI Gateway] Error ${aiResponse.status}:`, errText.substring(0, 200));
+      return new Response(JSON.stringify({ error: 'AI generation failed', details: errText.substring(0, 200) }), { status: 502, headers: corsHeaders });
+    }
+
+    const aiData = await aiResponse.json();
+    const text = aiData.choices?.[0]?.message?.content ?? '';
+
+    if (!text) {
+      return new Response(JSON.stringify({ error: 'Empty AI response' }), { status: 502, headers: corsHeaders });
+    }
+
+    console.log(`[AI Gateway] ✅ Success — ${text.length} chars`);
+
+    // Log to ai_conversations
+    if (!isPreview) {
+      await supabaseAdmin.from('ai_conversations').insert({
+        project_id, protocol,
+        messages: [...allMessages, { role: 'assistant', content: text }],
+        token_count: text.length,
+      });
+    }
+
+    // Return as SSE stream for frontend compatibility
     const encoder = new TextEncoder();
-
-    // Strategy: Try Gemini first, then fall back to Anthropic
-    // Gemini REST fallback (identičan pattern kao process-form-upload)
-    if (geminiKeys.length > 0) {
-      const shuffledKeys = [...geminiKeys].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < shuffledKeys.length; i++) {
-        const apiKey = shuffledKeys[i];
-        console.log(`[Gemini] Attempting with key index ${i} via REST Stream`);
-        try {
-          const geminiResp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: allMessages.map(m => ({ text: `${m.role}: ${m.content}` })) }],
-                generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
-              })
-            }
-          );
-
-          if (geminiResp.status === 429 || geminiResp.status === 403) {
-            const errText = await geminiResp.text();
-            console.warn(`[Gemini] Key ${i} failed: ${geminiResp.status} ${errText.substring(0, 80)}`);
-            continue;
-          }
-
-          if (!geminiResp.ok) {
-            console.warn(`[Gemini] Key ${i} HTTP error: ${geminiResp.status}`);
-            break;
-          }
-
-          const geminiData = await geminiResp.json();
-          const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-          
-          if (text) {
-            console.log(`[Gemini] ✅ Success with key ${i}`);
-
-            if (!isPreview) {
-              await supabaseAdmin.from('ai_conversations').insert({
-                project_id, protocol,
-                messages: [...allMessages, { role: 'assistant', content: text }],
-                token_count: text.length,
-              });
-            }
-
-            const stream = new ReadableStream({
-              start(controller) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text })}\n\n`));
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: text })}\n\n`));
-                controller.close();
-              }
-            });
-            return new Response(stream, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
-          }
-        } catch (err: any) {
-          console.warn(`[Gemini] Key ${i} exception:`, err.message?.substring(0, 80));
-          continue;
-        }
-      }
-    }
-
-    // Groq Fallback (v5.7)
-    const groqKeysString = Deno.env.get('GROQ_API_KEYS') || '[]';
-    const groqKeys: string[] = JSON.parse(groqKeysString);
-
-    if (groqKeys.length > 0) {
-      const shuffled = [...groqKeys].sort(() => Math.random() - 0.5);
-      for (const groqKey of shuffled) {
-        try {
-          console.log('[Groq] Trying key:', groqKey.substring(0, 12) + '...');
-          const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${groqKey}`
-            },
-            body: JSON.stringify({
-              model: 'llama-3.3-70b-versatile',
-              messages: allMessages.map(m => ({
-                role: m.role === 'assistant' ? 'assistant' : 'user',
-                content: m.content
-              })),
-              max_tokens: 2048,
-              temperature: 0.7,
-              stream: false
-            })
-          });
-
-          if (groqResp.status === 429) { continue; }
-          if (!groqResp.ok) { break; }
-
-          const groqData = await groqResp.json();
-          const text = groqData.choices?.[0]?.message?.content ?? '';
-          if (text) {
-            console.log('[Groq] ✅ Success');
-
-            if (!isPreview) {
-              // Log to ai_conversations
-              await supabaseAdmin.from('ai_conversations').insert({
-                project_id, protocol,
-                messages: [...allMessages, { role: 'assistant', content: text }],
-                token_count: text.length,
-              });
-            }
-
-            // SSE response
-            const encoder = new TextEncoder();
-            const stream = new ReadableStream({
-              start(controller) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text })}\n\n`));
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: text })}\n\n`));
-                controller.close();
-              }
-            });
-            return new Response(stream, {
-              headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' }
-            });
-          }
-        } catch (err: any) {
-          console.warn('[Groq] Error:', err.message?.substring(0, 80));
-          continue;
-        }
-      }
-    }
-
-    // Anthropic Fallback
-    const { default: Anthropic } = await import('npm:@anthropic-ai/sdk@0.20.0');
-    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')!;
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
-
-    const stream = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6-20251001',
-      max_tokens: 4096,
-      system: systemInstruction,
-      messages: allMessages,
-      stream: true,
-    });
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-              fullContent += event.delta.text;
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: event.delta.text })}\n\n`));
-            }
-            if (!isPreview && event.type === 'message_stop') {
-              await supabaseAdmin.from('ai_conversations').insert({
-                project_id, protocol,
-                messages: [...allMessages, { role: 'assistant', content: fullContent }],
-                token_count: fullContent.length,
-              });
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: fullContent })}\n\n`));
-              controller.close();
-            } else if (isPreview && event.type === 'message_stop') {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: fullContent })}\n\n`));
-              controller.close();
-            }
-          }
-        } catch (e: any) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: e.message })}\n\n`));
-          controller.close();
-        }
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text })}\n\n`));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: text })}\n\n`));
+        controller.close();
       }
     });
 
-    return new Response(readable, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
+    return new Response(stream, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
 
   } catch (error: any) {
+    console.error('[Error]', error.message);
     return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

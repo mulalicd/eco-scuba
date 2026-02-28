@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -66,8 +66,7 @@ export default function Settings() {
                 .update({
                     full_name: profile.full_name,
                     organization: profile.organization,
-                    notification_prefs: profile.notification_prefs
-                })
+                } as any)
                 .eq('id', user.id);
 
             if (error) throw error;

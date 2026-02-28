@@ -24,7 +24,7 @@ import {
     TrendingUp,
     AlertCircle
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const projectStatusData = [
     { name: 'Draft', value: 4, color: '#94a3b8' },
