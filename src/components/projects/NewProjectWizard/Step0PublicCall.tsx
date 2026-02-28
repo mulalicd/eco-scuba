@@ -1,5 +1,5 @@
 // src/components/projects/NewProjectWizard/Step0PublicCall.tsx
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ interface Props {
     onNext: (data: any) => void;
 }
 
-export default function Step0PublicCall({ onNext }: Props) {
+const Step0PublicCall = forwardRef<HTMLDivElement, Props>(({ onNext }, ref) => {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [analysis, setAnalysis] = useState<any>(null);
@@ -113,7 +113,7 @@ export default function Step0PublicCall({ onNext }: Props) {
     };
 
     return (
-        <div className="flex flex-col h-full">
+        <div ref={ref} className="flex flex-col h-full">
             <div className="mb-6">
                 <h3 className="text-xl font-bold text-text-primary">KORAK 1: Upload Javnog poziva</h3>
                 <p className="text-sm text-text-dim mt-1">
@@ -201,4 +201,8 @@ export default function Step0PublicCall({ onNext }: Props) {
             )}
         </div>
     );
-}
+});
+
+Step0PublicCall.displayName = 'Step0PublicCall';
+
+export default Step0PublicCall;
