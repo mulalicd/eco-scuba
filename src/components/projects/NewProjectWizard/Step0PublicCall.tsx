@@ -74,9 +74,10 @@ const Step0PublicCall = forwardRef<HTMLDivElement, Props>(({ onNext }, ref) => {
                 extractTextFromPDF(file)
             ]);
 
-            console.log('[Step0] base64 spreman, tekst ekstrahovan:', extractedText.length, 'znakova');
+            const isScanned = extractedText.trim().length < 100;
+            console.log(`[Step0] base64 spreman, tekst: ${extractedText.length} znakova, skenirani PDF: ${isScanned}`);
 
-            // Pošalji kroz Edge Function (ne direktno u streamSection)
+            // Pošalji kroz Edge Function - ako je skenirani PDF, Gemini čita direktno iz base64
             const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-form-upload`;
 
             const response = await fetch(functionUrl, {

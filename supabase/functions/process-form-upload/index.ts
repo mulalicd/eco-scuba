@@ -1,15 +1,14 @@
-// @ts-nocheck
 // supabase/functions/process-form-upload/index.ts
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 const PUBLIC_CALL_PROMPT = `Ti si ekspert za analizu javnih poziva za projektne prijedloge u Bosni i Hercegovini.
-Analiziraj priloženi tekst dokumenta i vrati strukturiranu analizu u JSON formatu sa sljedećim poljima:
+Analiziraj priloženi dokument i vrati strukturiranu analizu u JSON formatu sa sljedećim poljima:
 {
   "eligibility_criteria": ["kriterij 1", "kriterij 2"],
   "required_documents": ["dokument 1", "dokument 2"],
@@ -22,7 +21,7 @@ Analiziraj priloženi tekst dokumenta i vrati strukturiranu analizu u JSON forma
 Budi koncizan i precizan. Odgovaraj isključivo na bosanskom jeziku.`;
 
 const APPLICATION_FORM_PROMPT = `Ti si ekspert za analizu obrazaca za projektne prijave.
-Analiziraj priloženi tekst obrasca i vrati njegovu strukturu u JSON formatu sa sljedećim poljima:
+Analiziraj priloženi dokument i vrati njegovu strukturu u JSON formatu sa sljedećim poljima:
 {
   "form_language": "bs|en|hr",
   "form_title": "naziv obrasca",
@@ -75,7 +74,6 @@ Deno.serve(async (req: Request) => {
         const isPublicCall = source === 'public_call';
         const prompt = isPublicCall ? PUBLIC_CALL_PROMPT : APPLICATION_FORM_PROMPT;
 
-        // Use Lovable AI Gateway
         const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
         if (!lovableApiKey) {
             return new Response(
@@ -84,9 +82,39 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const contentToAnalyze = text_content || 'PDF dokument uploadovan (tekst nije ekstrahovan na klijentu).';
+        // Determine if we have meaningful extracted text or need multimodal PDF input
+        const hasUsableText = text_content && text_content.trim().length > 100;
 
-        console.log('[AI Gateway] Processing form upload, source:', source, '| text length:', contentToAnalyze.length);
+        console.log(`[AI Gateway] source: ${source} | text: ${text_content?.length ?? 0} chars | hasUsableText: ${hasUsableText} | hasPDF: ${!!pdf_base64}`);
+
+        // Build messages array - use multimodal when text extraction failed
+        const userContent: any[] = [];
+
+        if (hasUsableText) {
+            // Text extraction worked - send text only (faster, cheaper)
+            userContent.push({
+                type: 'text',
+                text: `Analiziraj sljedeći dokument:\n\n${text_content.substring(0, 12000)}`
+            });
+        } else if (pdf_base64) {
+            // Text extraction failed (scanned PDF) - send PDF as image to Gemini multimodal
+            console.log('[AI Gateway] Using multimodal PDF input (scanned document detected)');
+            userContent.push({
+                type: 'text',
+                text: 'Analiziraj sljedeći PDF dokument:'
+            });
+            userContent.push({
+                type: 'image_url',
+                image_url: {
+                    url: `data:application/pdf;base64,${pdf_base64}`
+                }
+            });
+        } else {
+            userContent.push({
+                type: 'text',
+                text: 'Dokument nije dostupan za analizu.'
+            });
+        }
 
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
@@ -98,18 +126,18 @@ Deno.serve(async (req: Request) => {
                 model: 'google/gemini-2.5-flash',
                 messages: [
                     { role: 'system', content: prompt },
-                    { role: 'user', content: `Analiziraj sljedeći dokument:\n\n${contentToAnalyze}` }
+                    { role: 'user', content: userContent }
                 ],
-                max_tokens: 2048,
-                temperature: 0.7,
+                max_tokens: 4096,
+                temperature: 0.3,
             }),
         });
 
         if (!aiResponse.ok) {
             const errText = await aiResponse.text();
-            console.error('[AI Gateway] Error:', aiResponse.status, errText.substring(0, 200));
+            console.error('[AI Gateway] Error:', aiResponse.status, errText.substring(0, 500));
             return new Response(
-                JSON.stringify({ error: 'AI analysis failed' }),
+                JSON.stringify({ error: 'AI analysis failed', details: errText.substring(0, 200) }),
                 { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
