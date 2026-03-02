@@ -596,6 +596,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_uuid: { Args: never; Returns: string }
       user_can_access_project: {
         Args: { project_uuid: string }
         Returns: boolean
