@@ -597,6 +597,14 @@ export type Database = {
     }
     Functions: {
       current_user_uuid: { Args: never; Returns: string }
+      is_project_collaborator: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_project_owner: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_can_access_project: {
         Args: { project_uuid: string }
         Returns: boolean
