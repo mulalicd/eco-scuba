@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { Check, Edit3, RotateCcw, Sparkles, AlertTriangle, Loader2 } from "lucide-react";
+import { useMemo } from "react";
+import { Check, Edit3, RotateCcw, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { DisclaimerBanner } from "./DisclaimerBanner";
 import { parseRIPStatus } from "@/lib/rip-parser";
+import DOMPurify from "dompurify";
 
 interface Props {
     section: {
@@ -20,8 +21,10 @@ interface Props {
 }
 
 export default function SectionCard({ section, onApprove, onEdit, onRegenerate }: Props) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [revisionNote, setRevisionNote] = useState("");
+    const renderedContent = useMemo(() => {
+        const parsed = parseRIPStatus(section.content_html || "");
+        return DOMPurify.sanitize(parsed, { USE_PROFILES: { html: true } });
+    }, [section.content_html]);
 
     const isGenerating = section.status === 'generating';
     const isAwaiting = section.status === 'awaiting_approval';
@@ -71,7 +74,7 @@ export default function SectionCard({ section, onApprove, onEdit, onRegenerate }
                 ) : section.content_html ? (
                     <div
                         className="text-text-primary leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: parseRIPStatus(section.content_html) }}
+                        dangerouslySetInnerHTML={{ __html: renderedContent }}
                     />
                 ) : (
                     <div className="py-12 flex flex-col items-center justify-center text-center opacity-50">

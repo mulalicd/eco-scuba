@@ -67,30 +67,66 @@ export function useAIStream() {
             if (!reader) throw new Error("Stream nije dostupan.");
 
             const decoder = new TextDecoder();
+            let sseBuffer = '';
+
+            const handleStreamEvent = (data: any) => {
+                if (data.type === 'delta') {
+                    fullContent += data.text;
+                    setContent(fullContent);
+                    return;
+                }
+
+                if (data.type === 'error') {
+                    throw new Error(data.message || 'Greška tokom stream-a.');
+                }
+
+                if (data.type === 'done') {
+                    fullContent = data.content || fullContent;
+                    setContent(fullContent);
+                }
+            };
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+                sseBuffer += decoder.decode(value, { stream: true });
+                const events = sseBuffer.split('\n\n');
+                sseBuffer = events.pop() ?? '';
 
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
+                for (const event of events) {
+                    const lines = event.split('\n');
+                    for (const line of lines) {
+                        if (!line.startsWith('data:')) continue;
+
+                        const payload = line.slice(5).trim();
+                        if (!payload || payload === '[DONE]') continue;
+
+                        let parsedEvent: any;
                         try {
-                            const data = JSON.parse(line.slice(6));
-                            if (data.type === 'delta') {
-                                fullContent += data.text;
-                                setContent(fullContent);
-                            } else if (data.type === 'error') {
-                                throw new Error(data.message);
-                            } else if (data.type === 'done') {
-                                fullContent = data.content || fullContent;
-                                setContent(fullContent);
-                            }
-                        } catch (e) {
-                            // Skip invalid JSON lines
+                            parsedEvent = JSON.parse(payload);
+                        } catch {
+                            continue;
                         }
+
+                        handleStreamEvent(parsedEvent);
+                    }
+                }
+            }
+
+            const remaining = sseBuffer.trim();
+            if (remaining.startsWith('data:')) {
+                const payload = remaining.slice(5).trim();
+                if (payload && payload !== '[DONE]') {
+                    let parsedEvent: any;
+                    try {
+                        parsedEvent = JSON.parse(payload);
+                    } catch {
+                        parsedEvent = null;
+                    }
+
+                    if (parsedEvent) {
+                        handleStreamEvent(parsedEvent);
                     }
                 }
             }

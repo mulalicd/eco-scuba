@@ -24,6 +24,7 @@ import { useAIStream } from "@/hooks/useAIStream";
 import { toast } from "sonner";
 import ChangeRequestPanel from "@/components/editor/ChangeRequestPanel";
 import FinalAssemblyModal from "@/components/editor/FinalAssemblyModal";
+import { normalizeGeneratedHtml } from "@/lib/rip-parser";
 
 interface ProjectCollaborator {
     id: string;
@@ -99,12 +100,17 @@ export default function ProjectEditor() {
                 toast.info("Pronađene su zaglavljene sekcije iz prethodne sesije. Status je resetovan na 'pending'.");
             }
 
-            const { data: collabData } = await supabase
+            const { data: collabData, error: collabError } = await supabase
                 .from('project_collaborators')
-                .select('*, profiles(*)')
+                .select('id, user_id, role, status, profiles:profiles!project_collaborators_user_id_fkey(*)')
                 .eq('project_id', id);
 
-            setCollaborators((collabData as any) || []);
+            if (collabError) {
+                console.warn("Collaborators load warning:", collabError.message);
+                setCollaborators([]);
+            } else {
+                setCollaborators((collabData as any) || []);
+            }
 
             const { data: logData } = await supabase
                 .from('change_log')
@@ -190,12 +196,14 @@ export default function ProjectEditor() {
                 }
             });
 
-            if (finalContent) {
+            const normalizedContent = normalizeGeneratedHtml(finalContent);
+
+            if (normalizedContent) {
                 // Save final content
                 const { error: updError } = await supabase
                     .from('project_sections')
                     .update({
-                        content_html: finalContent,
+                        content_html: normalizedContent,
                         status: 'awaiting_approval',
                         version: (section.version || 1) + 1
                     } as any)
@@ -203,6 +211,8 @@ export default function ProjectEditor() {
 
                 if (updError) throw updError;
                 toast.success(`Sekcija "${section.section_title_bs}" generisana.`);
+            } else {
+                throw new Error('AI je vratio prazan sadržaj.');
             }
 
         } catch (err) {
