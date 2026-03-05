@@ -6,7 +6,69 @@
 
 @layer base {
   :root {
-    /* Deep Water Professionalism — Dark Theme Only */
+    /* Light Mode — Clean Professional */
+    --background: 210 25% 97%;
+    --foreground: 220 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 15%;
+
+    --primary: 199 89% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 187 50% 90%;
+    --secondary-foreground: 199 89% 25%;
+
+    --muted: 210 20% 93%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 199 80% 92%;
+    --accent-foreground: 199 89% 25%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 30% 15%;
+
+    --border: 214 20% 85%;
+    --input: 214 20% 85%;
+    --ring: 199 89% 38%;
+
+    --radius: 0.75rem;
+
+    --bg-surface: 210 20% 95%;
+    --bg-glass: 0 0% 100% / 0.85;
+    --brand-deep: 204 90% 32%;
+    --glow: 190 100% 40%;
+    --glow-soft: 199 89% 48% / 0.06;
+    --glow-ring: 0 0 0 1px hsl(199 89% 48% / 0.15), 0 0 8px hsl(199 89% 48% / 0.08);
+    --border-subtle: 214 20% 85%;
+    --border-default: 214 20% 78%;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 15px hsl(199 89% 48% / 0.1);
+
+    --sidebar-background: 210 25% 97%;
+    --sidebar-foreground: 220 30% 15%;
+    --sidebar-primary: 199 89% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent-foreground: 220 30% 15%;
+    --sidebar-border: 214 20% 85%;
+    --sidebar-ring: 199 89% 38%;
+  }
+
+  .dark {
+    /* Deep Water Professionalism — Dark Theme */
     --background: 222 60% 7%;
     --foreground: 214 80% 96%;
 
@@ -41,9 +103,6 @@
     --input: 199 89% 48% / 0.15;
     --ring: 199 89% 48%;
 
-    --radius: 0.75rem;
-
-    /* Custom tokens */
     --bg-surface: 216 50% 15%;
     --bg-glass: 217 55% 10% / 0.85;
     --brand-deep: 204 90% 32%;
@@ -66,14 +125,6 @@
     --sidebar-accent-foreground: 214 80% 96%;
     --sidebar-border: 199 89% 48% / 0.1;
     --sidebar-ring: 199 89% 48%;
-    
-    /* compatibility for old variables */
-    --bg-primary: #0a0f1e;
-    --bg-secondary: #0d1829;
-    --bg-tertiary: #111f35;
-    --brand: #0ea5e9;
-    --text-primary: #f0f6ff;
-    --text-dim: #4d7094;
   }
 }
 
@@ -100,11 +151,38 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(199 89% 48% / 0.2);
+    background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(199 89% 48% / 0.35);
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Prose styling for generated content */
+  .prose {
+    color: hsl(var(--foreground));
+  }
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    color: hsl(var(--foreground));
+  }
+  .prose p, .prose li, .prose td, .prose th {
+    color: hsl(var(--foreground));
+  }
+  .prose strong {
+    color: hsl(var(--foreground));
+  }
+  .prose a {
+    color: hsl(var(--primary));
+  }
+  .prose table {
+    border-color: hsl(var(--border));
+  }
+  .prose th {
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+  }
+  .prose td {
+    border-color: hsl(var(--border));
   }
 }
 
@@ -127,11 +205,11 @@
   }
 
   .bg-gradient-ocean {
-    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(217 55% 10%) 50%, hsl(216 50% 15%) 100%);
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--card)) 50%, hsl(var(--muted)) 100%);
   }
 
   .shimmer {
-    background: linear-gradient(90deg, transparent 0%, hsl(199 89% 48% / 0.05) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, hsl(var(--primary) / 0.05) 50%, transparent 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }

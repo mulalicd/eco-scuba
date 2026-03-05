@@ -3,14 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FileDown,
+    FileText,
     Mail,
     MoreHorizontal,
-    Play,
-    Save,
     Loader2,
     ChevronLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useUIStore } from "@/store/uiStore";
 import { useProjectStore } from "@/store/projectStore";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ import SectionCard from "@/components/editor/SectionCard";
 import RIPPhase from "@/components/editor/RIPPhase";
 import { APAStatePanel } from "@/components/editor/APAStatePanel";
 import { generateProposalPDF } from "@/lib/pdf-generator";
+import { generateProposalDOCX } from "@/lib/docx-generator";
 import { useAIStream } from "@/hooks/useAIStream";
 import { toast } from "sonner";
 import ChangeRequestPanel from "@/components/editor/ChangeRequestPanel";
@@ -53,6 +54,7 @@ export default function ProjectEditor() {
     const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
     const [changeSection, setChangeSection] = useState<ProjectSection | null>(null);
     const [showAssembly, setShowAssembly] = useState(false);
+    const [exportType, setExportType] = useState<'pdf' | 'docx'>('pdf');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -84,20 +86,18 @@ export default function ProjectEditor() {
             if (sError) throw sError;
             setSections((sectionsData || []) as any);
 
-            // AUTO-FIX: Reset stuck 'generating' sections to 'pending'
+            // AUTO-FIX: Reset stuck 'generating' sections
             const stuckSections = sectionsData?.filter(s => s.status === 'generating') || [];
             if (stuckSections.length > 0) {
-                console.log(`[APA-Fix] Pronađeno ${stuckSections.length} zaglavljenih sekcija. Resetujem na 'pending'...`);
                 for (const section of stuckSections) {
                     await supabase
                         .from('project_sections')
                         .update({ status: 'pending' } as any)
                         .eq('id', section.id);
                 }
-                // Update local state as well
                 const resetSections = (sectionsData || []).map((s: any) => s.status === 'generating' ? { ...s, status: 'pending' } : s) as any;
                 setSections(resetSections);
-                toast.info("Pronađene su zaglavljene sekcije iz prethodne sesije. Status je resetovan na 'pending'.");
+                toast.info("Zaglavljene sekcije su resetovane.");
             }
 
             const { data: collabData, error: collabError } = await supabase
@@ -143,9 +143,7 @@ export default function ProjectEditor() {
             })
             .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { supabase.removeChannel(channel); };
     };
 
     const scrollToSection = (sectionId: string) => {
@@ -170,36 +168,63 @@ export default function ProjectEditor() {
         }
     }, [id]);
 
+    // Build full project context for AI including ALL data
+    const buildProjectContext = useCallback(() => {
+        if (!currentProject) return {};
+        return {
+            title: currentProject.title,
+            donor_name: currentProject.donor_name,
+            priority_area: currentProject.priority_area,
+            direct_beneficiaries: currentProject.direct_beneficiaries,
+            indirect_beneficiaries: (currentProject as any).indirect_beneficiaries,
+            total_budget_km: currentProject.total_budget_km,
+            requested_budget_km: currentProject.requested_budget_km,
+            own_contribution_km: currentProject.own_contribution_km,
+            project_duration_months: (currentProject as any).project_duration_months,
+            project_start_date: (currentProject as any).project_start_date,
+            project_end_date: (currentProject as any).project_end_date,
+            project_locations: currentProject.project_locations,
+            project_language: currentProject.project_language,
+            apa_collected_data: currentProject.apa_collected_data || {},
+            rip_data: currentProject.rip_data || {},
+            apa_state: currentProject.apa_state || {},
+        };
+    }, [currentProject]);
+
+    // Get existing sections with content for cross-referencing
+    const getExistingSectionsForContext = useCallback(() => {
+        return sections
+            .filter(s => s.content_html && s.status !== 'pending')
+            .map(s => ({
+                section_key: s.section_key,
+                section_title_bs: s.section_title_bs,
+                content_html: s.content_html,
+            }));
+    }, [sections]);
+
     const handleRegenerate = useCallback(async (sectionId: string) => {
         const section = sections.find(s => s.id === sectionId);
         if (!section || !currentProject) return;
 
         try {
-            // Set status to generating locally & in DB
             updateSection(section.section_key, { ...section, status: 'generating' });
             await supabase
                 .from('project_sections')
                 .update({ status: 'generating' } as any)
                 .eq('id', sectionId);
 
-            // Start stream
             const finalContent = await streamSection({
                 project_id: currentProject.id,
                 section_key: section.section_key,
                 protocol: 'WA',
-                messages: [], // We can pull existing context if needed
-                project_context: {
-                    title: currentProject.title,
-                    donor: currentProject.donor_name,
-                    priority: currentProject.priority_area,
-                    goals: currentProject.apa_collected_data
-                }
+                messages: [],
+                project_context: buildProjectContext(),
+                existing_sections: getExistingSectionsForContext(),
             });
 
             const normalizedContent = normalizeGeneratedHtml(finalContent);
 
             if (normalizedContent) {
-                // Save final content
                 const { error: updError } = await supabase
                     .from('project_sections')
                     .update({
@@ -214,7 +239,6 @@ export default function ProjectEditor() {
             } else {
                 throw new Error('AI je vratio prazan sadržaj.');
             }
-
         } catch (err) {
             console.error("Stream error:", err);
             toast.error("Greška pri generisanju sekcije.");
@@ -223,9 +247,9 @@ export default function ProjectEditor() {
                 .update({ status: 'pending' } as any)
                 .eq('id', sectionId);
         }
-    }, [sections, currentProject, streamSection, updateSection]);
+    }, [sections, currentProject, streamSection, updateSection, buildProjectContext, getExistingSectionsForContext]);
 
-    const handleExportPDF = async () => {
+    const handleExport = async (type: 'pdf' | 'docx') => {
         if (!currentProject) return;
 
         const approvedSections = sections.filter(s => s.status === 'approved');
@@ -234,19 +258,23 @@ export default function ProjectEditor() {
             return;
         }
 
+        setExportType(type);
         setShowAssembly(true);
     };
 
     const finalizeExport = async () => {
         setShowAssembly(false);
         const approvedSections = sections.filter(s => s.status === 'approved');
-
         if (!currentProject) return;
 
-        toast.promise(generateProposalPDF(approvedSections as any, currentProject.title, currentProject.donor_name ?? undefined), {
-            loading: 'Generišem industrijski PDF...',
-            success: 'Projektni prijedlog uspješno sačuvan!',
-            error: 'Greška pri generisanju PDF-a.'
+        const exportFn = exportType === 'docx'
+            ? generateProposalDOCX(approvedSections as any, currentProject.title, currentProject.donor_name ?? undefined)
+            : generateProposalPDF(approvedSections as any, currentProject.title, currentProject.donor_name ?? undefined);
+
+        toast.promise(exportFn, {
+            loading: `Generišem ${exportType.toUpperCase()}...`,
+            success: `Projektni prijedlog uspješno sačuvan kao ${exportType.toUpperCase()}!`,
+            error: `Greška pri generisanju ${exportType.toUpperCase()}.`
         });
     };
 
@@ -261,8 +289,6 @@ export default function ProjectEditor() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Korisnik nije prijavljen");
 
-            // Apply FIX-06 protocol: APA Analysis already shown in UI
-            // Now log the change request in DB
             await (supabase.from('change_log') as any).insert({
                 project_id: currentProject.id,
                 requested_by: user.id,
@@ -272,14 +298,47 @@ export default function ProjectEditor() {
             });
 
             const sId = changeSection.id;
+            const sKey = changeSection.section_key;
             setChangeSection(null);
-            handleRegenerate(sId);
-            toast.success("Izmjena registrovana i sekcija se ponovo piše.");
+
+            // Regenerate with change request context
+            const section = sections.find(s => s.id === sId);
+            if (!section) return;
+
+            updateSection(section.section_key, { ...section, status: 'generating' });
+            await supabase
+                .from('project_sections')
+                .update({ status: 'generating' } as any)
+                .eq('id', sId);
+
+            const finalContent = await streamSection({
+                project_id: currentProject.id,
+                section_key: sKey,
+                protocol: 'WA',
+                messages: [],
+                project_context: buildProjectContext(),
+                existing_sections: getExistingSectionsForContext(),
+                change_request: description,
+            });
+
+            const normalizedContent = normalizeGeneratedHtml(finalContent);
+
+            if (normalizedContent) {
+                await supabase
+                    .from('project_sections')
+                    .update({
+                        content_html: normalizedContent,
+                        status: 'awaiting_approval',
+                        version: (section.version || 1) + 1
+                    } as any)
+                    .eq('id', sId);
+                toast.success("Izmjena primijenjena i sekcija ponovo napisana.");
+            }
         } catch (err) {
             console.error("Change apply error:", err);
             toast.error("Greška pri bilježenju izmjene.");
         }
-    }, [changeSection, currentProject, handleRegenerate]);
+    }, [changeSection, currentProject, sections, streamSection, updateSection, buildProjectContext, getExistingSectionsForContext]);
 
     const approvedCount = useMemo(() =>
         sections.filter(s => s.status === 'approved').length,
@@ -300,15 +359,14 @@ export default function ProjectEditor() {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] gap-4">
-                <Loader2 className="h-10 w-10 text-brand animate-spin" />
-                <p className="text-text-dim text-sm font-medium animate-pulse">Učitavam APA State Register...</p>
+                <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                <p className="text-muted-foreground text-sm font-medium animate-pulse">Učitavam APA State Register...</p>
             </div>
         );
     }
 
-
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden -m-6 bg-bg-primary">
+        <div className="flex h-[calc(100vh-64px)] overflow-hidden -m-6 bg-background">
             {/* Left Column: Section Navigator */}
             <SectionNavigator
                 sections={sections as any}
@@ -318,21 +376,21 @@ export default function ProjectEditor() {
                 totalCount={sections.length}
             />
 
-            {/* Center Column: canvas */}
-            <div className="flex-1 flex flex-col bg-bg-primary overflow-hidden border-r border-border relative">
+            {/* Center Column */}
+            <div className="flex-1 flex flex-col bg-background overflow-hidden border-r border-border relative">
                 {/* Editor Top Bar */}
-                <div className="h-16 px-6 border-b border-border flex items-center justify-between bg-bg-secondary/40 backdrop-blur-xl z-20 sticky top-0">
+                <div className="h-16 px-6 border-b border-border flex items-center justify-between bg-card/40 backdrop-blur-xl z-20 sticky top-0">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate('/projects')} className="text-text-dim">
+                        <Button variant="ghost" size="icon" onClick={() => navigate('/projects')} className="text-muted-foreground">
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
                         <div>
-                            <h1 className="font-display font-bold text-base truncate max-w-[240px] leading-tight">
+                            <h1 className="font-display font-bold text-base truncate max-w-[240px] leading-tight text-foreground">
                                 {currentProject?.title}
                             </h1>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <div className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                <span className="text-[10px] text-text-dim font-bold uppercase tracking-widest whitespace-nowrap">
+                                <div className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_8px_hsl(var(--success)/0.5)]" />
+                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest whitespace-nowrap">
                                     {currentProject?.status?.replace('_', ' ')}
                                 </span>
                             </div>
@@ -340,13 +398,25 @@ export default function ProjectEditor() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="h-9 gap-2 border-border bg-bg-tertiary/30 text-xs font-bold" onClick={handleExportPDF}>
-                            <FileDown className="h-4 w-4 text-brand" /> Izvezi PDF
-                        </Button>
-                        <Button variant="brand" size="sm" className="h-9 gap-2 text-xs font-bold px-4 shadow-lg shadow-brand/20">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-9 gap-2 border-border text-xs font-bold">
+                                    <FileDown className="h-4 w-4 text-primary" /> Izvezi
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-2">
+                                    <FileDown className="h-4 w-4" /> Izvezi kao PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleExport('docx')} className="gap-2">
+                                    <FileText className="h-4 w-4" /> Izvezi kao DOCX
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button size="sm" className="h-9 gap-2 text-xs font-bold px-4 shadow-lg shadow-primary/20">
                             <Mail className="h-4 w-4" /> Pošalji
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-text-dim">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
                             <MoreHorizontal className="h-5 w-5" />
                         </Button>
                     </div>
@@ -355,18 +425,15 @@ export default function ProjectEditor() {
                 {/* Scrollable Canvas */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar space-y-12 pb-40"
+                    className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-12 pb-40"
                 >
                     <div className="max-w-4xl mx-auto space-y-12">
-                        {/* RIP Phase Banner */}
                         <RIPPhase />
-
-                        {/* Sections */}
                         {renderedSections}
                     </div>
                 </div>
 
-                {/* Change Request Panel [FIX-06] */}
+                {/* Change Request Panel */}
                 {changeSection && (
                     <ChangeRequestPanel
                         sectionTitle={changeSection.section_title_bs}
@@ -375,7 +442,7 @@ export default function ProjectEditor() {
                     />
                 )}
 
-                {/* Final Assembly Modal [FIX-08] */}
+                {/* Final Assembly Modal */}
                 {showAssembly && (
                     <FinalAssemblyModal
                         sections={sections}
@@ -384,7 +451,7 @@ export default function ProjectEditor() {
                     />
                 )}
 
-                {/* Glass Overlay for Streaming */}
+                {/* Streaming Overlay */}
                 <AnimatePresence>
                     {isStreaming && (
                         <motion.div
@@ -392,19 +459,19 @@ export default function ProjectEditor() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 20 }}
                             className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 
-                         bg-bg-secondary/80 backdrop-blur-xl border border-brand/30 
+                         bg-card/80 backdrop-blur-xl border border-primary/30 
                          px-6 py-3 rounded-full flex items-center gap-4 shadow-2xl"
                         >
-                            <Loader2 className="h-5 w-5 text-brand animate-spin" />
-                            <p className="text-sm font-medium text-text-primary whitespace-nowrap">
-                                APA AI piše sadržaj... <span className="text-text-dim ml-2 italic text-xs">{streamingContent.length} karaktera</span>
+                            <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                            <p className="text-sm font-medium text-foreground whitespace-nowrap">
+                                APA piše sadržaj... <span className="text-muted-foreground ml-2 italic text-xs">{streamingContent.length} karaktera</span>
                             </p>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* Right Column: APA State Panel */}
+            {/* Right Column */}
             <APAStatePanel
                 projectTitle={currentProject?.title || "Projekat"}
                 sections={sections}

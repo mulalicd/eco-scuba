@@ -2,6 +2,7 @@ import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NotificationBell from "./NotificationBell";
+import ThemeToggle from "./ThemeToggle";
 import { useState } from "react";
 import NewProjectWizard from "../projects/NewProjectWizard";
 
@@ -16,7 +17,7 @@ export default function TopNav({ title }: TopNavProps) {
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
       <h1 className="font-display text-xl font-bold text-foreground truncate max-w-[400px]">{title}</h1>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Search */}
         <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -26,6 +27,7 @@ export default function TopNav({ title }: TopNavProps) {
           />
         </div>
 
+        <ThemeToggle />
         <NotificationBell />
 
         <Button
