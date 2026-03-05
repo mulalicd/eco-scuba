@@ -4,8 +4,19 @@
  * Parses RIP status markers in string/HTML and converts them to styled HTML badges.
  * Markers: [VERIFICIRAN], [INDICIRAN], [PRETPOSTAVLJEN], [PODATAK NEDOSTAJE]
  */
+export function normalizeGeneratedHtml(content: string): string {
+    if (!content) return "";
+
+    return content
+        .replace(/^\s*```(?:html)?\s*/i, "")
+        .replace(/\s*```\s*$/i, "")
+        .trim();
+}
+
 export function parseRIPStatus(content: string): string {
     if (!content) return "";
+
+    let parsed = normalizeGeneratedHtml(content);
 
     const markers = [
         {
@@ -33,8 +44,6 @@ export function parseRIPStatus(content: string): string {
             text: "NEDOSTAJE"
         }
     ];
-
-    let parsed = content;
 
     markers.forEach(m => {
         const badge = `<span style="display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; background: ${m.bg}; color: ${m.color}; border: 1px solid ${m.color}33; margin: 0 4px; vertical-align: middle;">${m.text}</span>`;
