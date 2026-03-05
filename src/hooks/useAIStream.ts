@@ -1,4 +1,3 @@
-// src/hooks/useAIStream.ts
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,6 +7,8 @@ interface StreamParams {
     protocol: 'APA' | 'RIP' | 'RIP_FAZA_0' | 'WA';
     messages: Array<{ role: string; content: string }>;
     project_context: any;
+    existing_sections?: Array<{ section_key: string; section_title_bs: string; content_html: string | null }>;
+    change_request?: string;
 }
 
 export function useAIStream() {
@@ -53,7 +54,9 @@ export function useAIStream() {
                     section_key: params.section_key,
                     protocol: params.protocol,
                     messages: params.messages,
-                    project_context: params.project_context
+                    project_context: params.project_context,
+                    existing_sections: params.existing_sections || [],
+                    change_request: params.change_request || '',
                 }),
                 signal: abortControllerRef.current.signal
             });
@@ -69,23 +72,6 @@ export function useAIStream() {
             const decoder = new TextDecoder();
             let sseBuffer = '';
 
-            const handleStreamEvent = (data: any) => {
-                if (data.type === 'delta') {
-                    fullContent += data.text;
-                    setContent(fullContent);
-                    return;
-                }
-
-                if (data.type === 'error') {
-                    throw new Error(data.message || 'Greška tokom stream-a.');
-                }
-
-                if (data.type === 'done') {
-                    fullContent = data.content || fullContent;
-                    setContent(fullContent);
-                }
-            };
-
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
@@ -98,36 +84,45 @@ export function useAIStream() {
                     const lines = event.split('\n');
                     for (const line of lines) {
                         if (!line.startsWith('data:')) continue;
-
                         const payload = line.slice(5).trim();
                         if (!payload || payload === '[DONE]') continue;
 
-                        let parsedEvent: any;
                         try {
-                            parsedEvent = JSON.parse(payload);
-                        } catch {
-                            continue;
+                            const data = JSON.parse(payload);
+                            if (data.type === 'delta') {
+                                fullContent += data.text;
+                                setContent(fullContent);
+                            } else if (data.type === 'done') {
+                                fullContent = data.content || fullContent;
+                                setContent(fullContent);
+                            } else if (data.type === 'error') {
+                                throw new Error(data.message || 'Greška tokom stream-a.');
+                            }
+                        } catch (e) {
+                            if (e instanceof SyntaxError) continue;
+                            throw e;
                         }
-
-                        handleStreamEvent(parsedEvent);
                     }
                 }
             }
 
-            const remaining = sseBuffer.trim();
-            if (remaining.startsWith('data:')) {
-                const payload = remaining.slice(5).trim();
-                if (payload && payload !== '[DONE]') {
-                    let parsedEvent: any;
+            // Flush remaining buffer
+            if (sseBuffer.trim()) {
+                const lines = sseBuffer.split('\n');
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const payload = line.slice(5).trim();
+                    if (!payload || payload === '[DONE]') continue;
                     try {
-                        parsedEvent = JSON.parse(payload);
-                    } catch {
-                        parsedEvent = null;
-                    }
-
-                    if (parsedEvent) {
-                        handleStreamEvent(parsedEvent);
-                    }
+                        const data = JSON.parse(payload);
+                        if (data.type === 'done') {
+                            fullContent = data.content || fullContent;
+                            setContent(fullContent);
+                        } else if (data.type === 'delta') {
+                            fullContent += data.text;
+                            setContent(fullContent);
+                        }
+                    } catch { /* ignore */ }
                 }
             }
 

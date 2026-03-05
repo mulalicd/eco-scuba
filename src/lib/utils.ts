@@ -31,11 +31,11 @@ export function truncate(str: string, maxLength: number) {
 }
 
 export const SECTION_STATUS_CONFIG = {
-  pending: { label: "Čeka", color: "text-text-dim", bg: "bg-bg-tertiary", icon: "⬜" },
-  generating: { label: "Generišem", color: "text-brand", bg: "bg-brand/10", icon: "🔄" },
+  pending: { label: "Čeka", color: "text-muted-foreground", bg: "bg-muted", icon: "⬜" },
+  generating: { label: "Generišem", color: "text-primary", bg: "bg-primary/10", icon: "🔄" },
   awaiting_approval: { label: "Na odobrenju", color: "text-warning", bg: "bg-warning/10", icon: "⏳" },
   approved: { label: "Odobreno", color: "text-success", bg: "bg-success/10", icon: "✅" },
-  revision_requested: { label: "Izmjena", color: "text-orange-400", bg: "bg-orange-400/10", icon: "✏️" },
+  revision_requested: { label: "Izmjena", color: "text-orange-500 dark:text-orange-400", bg: "bg-orange-500/10 dark:bg-orange-400/10", icon: "✏️" },
 } as const;
 
 export const PROJECT_STATUS_CONFIG = {
