@@ -1,9 +1,7 @@
-import { lazy, Suspense, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { toast } from 'sonner'
 
-const RegisterForm = lazy(() => import('@/components/auth/RegisterForm').then(module => ({ default: module.RegisterForm })))
+const ForgotPasswordForm = lazy(() => import('@/components/auth/ForgotPasswordForm').then(module => ({ default: module.ForgotPasswordForm })))
 
 const FormSkeleton = () => (
   <div className="w-full max-w-md mx-auto animate-pulse">
@@ -12,24 +10,14 @@ const FormSkeleton = () => (
       <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
       <div className="space-y-3">
         <div className="h-10 bg-muted rounded" />
-        <div className="h-10 bg-muted rounded" />
-        <div className="h-10 bg-muted rounded" />
-        <div className="h-10 bg-muted rounded" />
         <div className="h-10 bg-muted rounded w-1/2" />
       </div>
     </div>
   </div>
 )
 
-export const Register: React.FC = () => {
-  const { isAuthenticated, loading } = useAuth()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!loading && isAuthenticated) {
-      navigate('/dashboard', { replace: true })
-    }
-  }, [isAuthenticated, loading, navigate])
+export const ForgotPassword: React.FC = () => {
+  const { loading } = useAuth()
 
   if (loading) {
     return (
@@ -42,7 +30,7 @@ export const Register: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Suspense fallback={<FormSkeleton />}>
-        <RegisterForm onSuccess={() => toast.success('Account created successfully!')} />
+        <ForgotPasswordForm />
       </Suspense>
     </div>
   )

@@ -4,6 +4,51 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## Authentication
+
+Eco-scuba uses Supabase for authentication with the following features:
+
+### User Registration
+- Email and password registration
+- Password requirements: 8+ characters, uppercase, number, special character
+- Optional organization field
+- Terms and conditions acceptance required
+
+### User Login
+- Email and password authentication
+- "Remember me" option for extended sessions
+- Password reset via email
+
+### Route Protection
+- Protected routes require authentication
+- Automatic redirect to login for unauthenticated users
+- Return URL preservation after login
+
+### Components
+- `LoginForm`: User login interface
+- `RegisterForm`: User registration interface
+- `ForgotPasswordForm`: Password reset interface
+- `UserMenu`: Authenticated user dropdown
+- `AuthGuard`: Route protection wrapper
+
+### Usage Examples
+
+```tsx
+// Protect a route
+import { AuthGuard } from '@/components/auth/AuthGuard'
+
+<Route path="/dashboard" element={
+  <AuthGuard>
+    <Dashboard />
+  </AuthGuard>
+} />
+
+// Use auth hook
+import { useAuth } from '@/hooks/useAuth'
+
+const { user, signIn, signOut, isAuthenticated } = useAuth()
+```
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
